@@ -1,6 +1,7 @@
 import { getIntegrationOverview } from "../../../lib/admin";
 import { requireTenantAdminSession } from "../../../lib/auth-guards";
 import { DataTable, type DataTableColumn } from "../../../components/data-table";
+import { FeedbackBanner } from "../../../components/feedback-banner";
 import {
   createFhirSourceAction,
   queueSyncJobAction,
@@ -11,6 +12,10 @@ import {
 import { getRecentJobs, getQueuedJobs } from "../../../lib/integration-jobs";
 import { getRecentJobEvents } from "../../../lib/integration-jobs";
 import { getCredentialsForSources } from "../../../lib/credentials";
+import {
+  sanitizeMessageForDisplay,
+  getUserFacingMessageFromParam
+} from "../../../lib/user-error-messages";
 
 const inputClassName =
   "w-full rounded-2xl border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100";
@@ -48,21 +53,6 @@ function formatDateTime(value: string | null) {
   }).format(new Date(value));
 }
 
-function FeedbackBanner({
-  tone,
-  message
-}: {
-  tone: "success" | "error";
-  message: string;
-}) {
-  const toneClassName =
-    tone === "success"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-      : "border-rose-200 bg-rose-50 text-rose-700";
-
-  return <p className={`rounded-2xl border px-4 py-3 text-sm ${toneClassName}`}>{message}</p>;
-}
-
 export default async function IntegrationsPage({
   searchParams
 }: {
@@ -98,12 +88,11 @@ export default async function IntegrationsPage({
           </div>
           <div className="space-y-4">
             <h1 className="text-4xl font-semibold tracking-[-0.04em] text-slate-950 md:text-5xl">
-              Register FHIR source systems for hourly analytics syncs.
+              Connect EHR and data sources for analytics.
             </h1>
             <p className="max-w-3xl text-base leading-8 text-slate-600">
-              This first integration screen covers source registration metadata only. Credential
-              management and checkpoint orchestration are still deferred, but tenant admins can now
-              register hosted FHIR endpoints and manage source status.
+              Register EHR and data sources, manage connection credentials, and run data syncs to keep
+              dashboards and reports up to date.
             </p>
           </div>
 
@@ -111,7 +100,12 @@ export default async function IntegrationsPage({
             {searchParams?.success ? (
               <FeedbackBanner message={searchParams.success} tone="success" />
             ) : null}
-            {searchParams?.error ? <FeedbackBanner message={searchParams.error} tone="error" /> : null}
+            {searchParams?.error ? (
+              <FeedbackBanner
+                message={getUserFacingMessageFromParam(searchParams.error, "integrations")}
+                tone="error"
+              />
+            ) : null}
           </div>
         </div>
       </section>
@@ -119,10 +113,10 @@ export default async function IntegrationsPage({
       <section className="grid gap-5 sm:gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="rounded-[30px] border border-slate-200/70 bg-white/78 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6 md:p-7">
           <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">
-            Register FHIR source
+            Add EHR connection
           </h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Capture the source metadata needed to stage extraction and future sync orchestration.
+            Enter connection details for your EHR or data source.
           </p>
 
           <form action={createFhirSourceAction} className="mt-6 grid gap-4 md:grid-cols-2">
@@ -141,16 +135,16 @@ export default async function IntegrationsPage({
             </label>
             <label className="block space-y-2 md:col-span-2">
               <span className={labelClassName}>Source name</span>
-              <input className={inputClassName} name="name" placeholder="Epic FHIR Production" required />
+              <input className={inputClassName} name="name" placeholder="e.g. Epic EHR" required />
             </label>
             <label className="block space-y-2 md:col-span-2">
-              <span className={labelClassName}>FHIR base URL</span>
-              <input
-                className={inputClassName}
-                name="baseUrl"
-                placeholder="https://ehr.example.com/fhir/R4"
-                required
-              />
+                    <span className={labelClassName}>Base URL</span>
+                    <input
+                      className={inputClassName}
+                      name="baseUrl"
+                      placeholder="https://ehr.example.com/fhir/R4"
+                      required
+                    />
             </label>
             <label className="block space-y-2">
               <span className={labelClassName}>Auth type</span>
@@ -173,34 +167,32 @@ export default async function IntegrationsPage({
               className="inline-flex items-center justify-center rounded-full bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(16,185,129,0.28)] transition hover:bg-emerald-600 md:col-span-2"
               type="submit"
             >
-              Register FHIR source
+              Register data source
             </button>
           </form>
         </div>
 
         <div className="rounded-[30px] border border-slate-200/70 bg-white/78 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6 md:p-7">
           <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">
-            Integration posture
+            Integration status
           </h2>
           <div className="mt-5 space-y-4">
             <div className="rounded-3xl border border-slate-200/80 bg-white/85 p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                Current mode
+                Data sources and sync
               </p>
-              <p className="mt-3 text-lg font-semibold text-slate-950">Managed registration</p>
+              <p className="mt-3 text-lg font-semibold text-slate-950">Data sources</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Source registration and source metadata editing are live. Secrets, token refresh,
-                and incremental checkpoints are still pending.
+                Register and edit EHR and data source connections. Set credentials and sync schedule per source.
               </p>
             </div>
             <div className="rounded-3xl border border-slate-200/80 bg-white/85 p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                Freshness target
+                Data refresh
               </p>
-              <p className="mt-3 text-lg font-semibold text-slate-950">Hourly analytics sync</p>
+              <p className="mt-3 text-lg font-semibold text-slate-950">Scheduled sync</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                The registration model already captures the cadence field that future orchestrators
-                will use for batched pulls.
+                Data is refreshed on a schedule (e.g. hourly or daily).
               </p>
             </div>
             <div className="rounded-3xl border border-slate-200/80 bg-white/85 p-5">
@@ -211,7 +203,7 @@ export default async function IntegrationsPage({
                 {overview.dataSources.length}
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Registered source systems in the active tenant.
+                Registered data sources for your organization.
               </p>
             </div>
           </div>
@@ -223,14 +215,14 @@ export default async function IntegrationsPage({
           Registered source systems
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Source records currently staged for the active tenant.
+          Registered data sources for your organization.
         </p>
 
         <div className="mt-6">
           <DataTable
             columns={sourceColumns}
             data={sourceRows}
-            emptyMessage="No FHIR sources registered for this tenant yet."
+            emptyMessage="No data sources registered yet."
           />
         </div>
 
@@ -303,7 +295,7 @@ export default async function IntegrationsPage({
                     <input className={inputClassName} defaultValue={source.name} name="name" required />
                   </label>
                   <label className="block space-y-2 xl:col-span-3">
-                    <span className={labelClassName}>FHIR base URL</span>
+                    <span className={labelClassName}>Base URL</span>
                     <input
                       className={inputClassName}
                       defaultValue={source.base_url}
@@ -356,9 +348,9 @@ export default async function IntegrationsPage({
       </section>
 
       <section className="rounded-[30px] border border-slate-200/70 bg-white/78 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6 md:p-7">
-        <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">Source credentials</h2>
+        <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">Connection credentials</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Store connection credentials for each source. Values are tenant-scoped and require admin rights.
+          Store connection credentials for each source. Requires administrator access.
         </p>
         <div className="mt-5 grid gap-4">
           {overview.dataSources.map((source) => {
@@ -447,20 +439,20 @@ export default async function IntegrationsPage({
       <section className="rounded-[30px] border border-slate-200/70 bg-white/78 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6 md:p-7">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">Sync jobs</h2>
+            <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">Data sync</h2>
             <p className="text-sm leading-6 text-slate-600">
-              Queue a sync for any active source and review recent job history.
+              Run a sync for any active source and review recent job history.
             </p>
           </div>
           <form action={simulateRunQueuedJobsAction} className="flex items-center gap-3">
             <div className="text-xs text-slate-500">
-              Queued: {queuedJobs.length}
+              Pending: {queuedJobs.length}
             </div>
             <button
               className="inline-flex items-center justify-center rounded-full border border-slate-300/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition hover:bg-white"
               type="submit"
             >
-              Run queued (demo)
+              Run pending syncs
             </button>
           </form>
         </div>
@@ -481,7 +473,7 @@ export default async function IntegrationsPage({
                 className="inline-flex items-center justify-center rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-emerald-600"
                 type="submit"
               >
-                Queue sync
+                Run sync
               </button>
             </form>
           ))}
@@ -516,7 +508,7 @@ export default async function IntegrationsPage({
                 {recentJobs.length === 0 ? (
                   <tr>
                     <td className="px-4 py-6 text-sm text-slate-500" colSpan={6}>
-                      No sync jobs have been queued yet.
+                      No sync jobs have been run yet.
                     </td>
                   </tr>
                 ) : (
@@ -541,7 +533,7 @@ export default async function IntegrationsPage({
                           {job.finished_at ? new Date(job.finished_at).toLocaleString() : "—"}
                         </td>
                         <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
-                          {job.message ?? "—"}
+                          {sanitizeMessageForDisplay(job.message)}
                         </td>
                       </tr>
                     );
@@ -556,7 +548,7 @@ export default async function IntegrationsPage({
       <section className="rounded-[30px] border border-slate-200/70 bg-white/78 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6 md:p-7">
         <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">Job events</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Recent integration job logs across all sources for the active tenant.
+          Recent integration job logs across all sources.
         </p>
         <div className="mt-4 overflow-hidden rounded-3xl border border-slate-200/80 bg-white/80 shadow-sm">
           <div className="overflow-x-auto">
@@ -600,7 +592,7 @@ export default async function IntegrationsPage({
                         {event.level}
                       </td>
                       <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
-                        {event.message}
+                        {sanitizeMessageForDisplay(event.message)}
                       </td>
                       <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
                         {new Date(event.occurred_at).toLocaleString()}

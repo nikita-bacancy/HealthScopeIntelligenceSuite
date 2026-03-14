@@ -18,13 +18,13 @@ export default function HomePage() {
               {DEFAULT_APP_NAME}
             </p>
             <p className="text-lg font-semibold text-slate-950">
-              Healthcare analytics control plane
+              Health Analytics & Business Intelligence
             </p>
           </div>
         </div>
         <div className="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
           <span className="h-2 w-2 rounded-full bg-current" />
-          Phase 1 bootstrap
+          Healthcare analytics platform
         </div>
       </div>
 
@@ -37,12 +37,11 @@ export default function HomePage() {
             </div>
             <div className="space-y-4">
               <h1 className="max-w-[11ch] text-5xl font-semibold tracking-[-0.05em] text-slate-950 md:text-6xl xl:text-7xl">
-                Tenant-safe infrastructure for clinical and financial intelligence.
+                Clinical, financial, and operational intelligence for your health system.
               </h1>
               <p className="max-w-3xl text-base leading-8 text-slate-600">
-                The platform now includes a production-style Next.js shell, tenant-aware domain
-                contracts, versioned REST route scaffolding, and Supabase-backed foundations for
-                memberships, RBAC, integration registration, and audit coverage.
+                Dashboards, EHR integrations, quality metrics, and compliance reporting—all with
+                role-based access and secure audit trails for healthcare organizations.
               </p>
             </div>
 
@@ -53,40 +52,34 @@ export default function HomePage() {
               >
                 Open sign-in
               </Link>
-              <Link
-                className="inline-flex items-center justify-center rounded-full border border-slate-300/80 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-white"
-                href="/api/v1/health"
-              >
-                Inspect API status
-              </Link>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
               <article className="rounded-3xl border border-slate-200/70 bg-white/72 p-5">
-                <h3 className="text-sm font-semibold text-slate-500">Initial domains</h3>
+                <h3 className="text-sm font-semibold text-slate-500">Capabilities</h3>
                 <p className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">
                   {CORE_DOMAINS.length}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Auth, tenancy, compliance, warehouse, analytics.
+                  Auth, organizations, compliance, analytics, and integrations.
                 </p>
               </article>
               <article className="rounded-3xl border border-slate-200/70 bg-white/72 p-5">
-                <h3 className="text-sm font-semibold text-slate-500">Core API routes</h3>
+                <h3 className="text-sm font-semibold text-slate-500">API coverage</h3>
                 <p className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">
                   {CORE_API_ROUTES.length}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Versioned REST surface scaffolded under <code>/api/v1</code>.
+                  REST APIs for analytics, compliance, and integrations.
                 </p>
               </article>
               <article className="rounded-3xl border border-slate-200/70 bg-white/72 p-5">
-                <h3 className="text-sm font-semibold text-slate-500">Freshness target</h3>
+                <h3 className="text-sm font-semibold text-slate-500">Data freshness</h3>
                 <p className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">
                   {summary.analyticsFreshness}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Hourly batch for MVP with event hooks reserved.
+                  Regular data refresh to keep dashboards and reports up to date.
                 </p>
               </article>
             </div>
@@ -95,14 +88,14 @@ export default function HomePage() {
 
         <div className="grid gap-6">
           <aside className="rounded-[28px] border border-slate-200/70 bg-white/72 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
-            <h2 className="text-lg font-semibold text-slate-950">Locked architecture choices</h2>
+            <h2 className="text-lg font-semibold text-slate-950">Platform capabilities</h2>
             <ul className="mt-5 space-y-4">
               <li className="grid gap-1 border-t border-slate-200/70 pt-4 first:border-t-0 first:pt-0 md:grid-cols-[130px_1fr]">
-                <span className="text-sm font-semibold text-slate-500">Interop</span>
+                <span className="text-sm font-semibold text-slate-500">Interoperability</span>
                 <span className="text-sm leading-6 text-slate-700">{summary.interopStrategy}</span>
               </li>
               <li className="grid gap-1 border-t border-slate-200/70 pt-4 md:grid-cols-[130px_1fr]">
-                <span className="text-sm font-semibold text-slate-500">Tenancy</span>
+                <span className="text-sm font-semibold text-slate-500">Multi-organization</span>
                 <span className="text-sm leading-6 text-slate-700">{summary.tenancyModel}</span>
               </li>
               <li className="grid gap-1 border-t border-slate-200/70 pt-4 md:grid-cols-[130px_1fr]">
@@ -117,18 +110,25 @@ export default function HomePage() {
           <SessionSummary configured={hasSupabaseEnv()} />
 
           <aside className="rounded-[28px] border border-slate-200/70 bg-white/72 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
-            <h2 className="text-lg font-semibold text-slate-950">Core route groups</h2>
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
-              {CORE_API_ROUTES.map((route) => (
-                <div
-                  className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4"
-                  key={route.path}
-                >
-                  <code className="block text-sm font-semibold text-emerald-700">{route.path}</code>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{route.summary}</p>
-                </div>
-              ))}
-            </div>
+            <h2 className="text-lg font-semibold text-slate-950">What you get</h2>
+            <ul className="mt-5 space-y-4">
+              <li className="flex gap-3 border-t border-slate-200/70 pt-4 first:border-t-0 first:pt-0">
+                <span className="text-emerald-600" aria-hidden>✓</span>
+                <span className="text-sm leading-6 text-slate-700">Executive dashboards and KPIs for clinical, financial, and operational metrics</span>
+              </li>
+              <li className="flex gap-3 border-t border-slate-200/70 pt-4">
+                <span className="text-emerald-600" aria-hidden>✓</span>
+                <span className="text-sm leading-6 text-slate-700">EHR integration with major health record systems</span>
+              </li>
+              <li className="flex gap-3 border-t border-slate-200/70 pt-4">
+                <span className="text-emerald-600" aria-hidden>✓</span>
+                <span className="text-sm leading-6 text-slate-700">Quality metrics tracking and compliance reporting</span>
+              </li>
+              <li className="flex gap-3 border-t border-slate-200/70 pt-4">
+                <span className="text-emerald-600" aria-hidden>✓</span>
+                <span className="text-sm leading-6 text-slate-700">Role-based access for clinicians, administrators, and executives</span>
+              </li>
+            </ul>
           </aside>
         </div>
       </section>

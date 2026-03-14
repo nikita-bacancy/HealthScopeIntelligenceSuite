@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@healthscope/auth/supabase";
+import { getUserFacingMessage } from "../../../../../lib/user-error-messages";
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
           data: null,
           pagination: null,
           meta: { version: "v1" },
-          error: { code: "SERVICE_KEY_MISSING", message: "Service role key not configured." }
+          error: { code: "SERVICE_KEY_MISSING", message: getUserFacingMessage(new Error("service role"), "api") }
         },
         { status: 503 }
       );
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
           data: null,
           pagination: null,
           meta: { version: "v1" },
-          error: { code: "ADMIN_CLIENT_UNAVAILABLE", message: "Unable to create admin client." }
+          error: { code: "ADMIN_CLIENT_UNAVAILABLE", message: getUserFacingMessage(new Error("admin client"), "api") }
         },
         { status: 503 }
       );
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
           data: null,
           pagination: null,
           meta: { version: "v1" },
-          error: { code: "USER_LOOKUP_FAILED", message: listErr.message }
+          error: { code: "USER_LOOKUP_FAILED", message: getUserFacingMessage(listErr, "api") }
         },
         { status: 500 }
       );
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
           data: null,
           pagination: null,
           meta: { version: "v1" },
-          error: { code: "PASSWORD_UPDATE_FAILED", message: updateErr.message }
+          error: { code: "PASSWORD_UPDATE_FAILED", message: getUserFacingMessage(updateErr, "api") }
         },
         { status: 500 }
       );
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
         data: null,
         pagination: null,
         meta: { version: "v1" },
-        error: { code: "UNKNOWN", message: error instanceof Error ? error.message : "Unexpected error" }
+        error: { code: "UNKNOWN", message: getUserFacingMessage(error, "api") }
       },
       { status: 500 }
     );

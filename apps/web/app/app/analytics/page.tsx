@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getAnalyticsOverview, getTenantReferenceData } from "../../../lib/analytics";
 import { formatAnalyticsNumber } from "../../../lib/analytics-presenter";
 import { requireAppSession } from "../../../lib/auth-guards";
+import { getUserFacingMessage } from "../../../lib/user-error-messages";
 
 const inputClassName =
   "w-full rounded-2xl border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100";
@@ -42,11 +43,10 @@ export default async function AnalyticsPage({
     return (
       <section className="rounded-[32px] border border-slate-200/70 bg-white/78 p-8 shadow-[0_24px_90px_rgba(15,23,42,0.10)] backdrop-blur xl:p-10">
         <h1 className="text-3xl font-semibold tracking-[-0.04em] text-slate-950">
-          Select a tenant to view analytics
+          Select an organization to view analytics
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
-          Analytics summaries are scoped to the active tenant. Use the tenant switcher in the
-          sidebar, then reload this view.
+          Choose an organization in the sidebar to see its analytics.
         </p>
       </section>
     );
@@ -64,15 +64,16 @@ export default async function AnalyticsPage({
       getTenantReferenceData(session.context)
     ]);
   } catch (error) {
+    const message = getUserFacingMessage(error, "analytics");
     return (
       <section className="rounded-[32px] border border-amber-200 bg-amber-50/80 p-6 shadow-sm sm:p-7 md:p-8">
         <h1 className="text-2xl font-semibold tracking-[-0.03em] text-amber-900">Analytics unavailable</h1>
         <p className="mt-3 text-sm leading-6 text-amber-800">
-          {error instanceof Error ? error.message : "Unable to load analytics for this tenant right now."}
+          {message}
         </p>
         <p className="mt-4 text-sm text-amber-800">
-          Try switching tenants in the sidebar or reloading after a few moments. If the issue persists,
-          confirm the active tenant has data and that your session includes tenant access.
+          Try switching organizations in the sidebar or reloading. If the issue persists,
+          confirm your organization has data and you have access.
         </p>
       </section>
     );
@@ -87,12 +88,10 @@ export default async function AnalyticsPage({
           </div>
           <div className="space-y-4">
             <h1 className="text-4xl font-semibold tracking-[-0.04em] text-slate-950 md:text-5xl">
-              Clinical, financial, and operational metrics for the active tenant.
+              Clinical, financial, and operational metrics for your organization.
             </h1>
             <p className="max-w-3xl text-base leading-8 text-slate-600">
-              This view is the first warehouse-backed summary surface. It reads tenant-scoped
-              healthcare data directly from the hosted database and is designed to evolve into full
-              dashboards and materialized KPI views.
+              Filter by reporting window, organization, and facility to focus on the metrics that matter.
             </p>
           </div>
         </div>
@@ -112,7 +111,7 @@ export default async function AnalyticsPage({
             className="inline-flex items-center justify-center rounded-full border border-slate-300/80 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-white"
             href={`/api/v1/analytics/overview?days=${overview.windowDays}${organizationId ? `&organizationId=${encodeURIComponent(organizationId)}` : ""}${facilityId ? `&facilityId=${encodeURIComponent(facilityId)}` : ""}`}
           >
-            Open analytics API
+            Export data
           </Link>
         </div>
 
@@ -162,7 +161,7 @@ export default async function AnalyticsPage({
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           label="Patients"
-          note="Unique patient records currently scoped into this tenant view."
+          note="Patients in this organization's scope."
           value={formatAnalyticsNumber(overview.summary.totalPatients, "integer")}
         />
         <MetricCard
@@ -249,23 +248,23 @@ export default async function AnalyticsPage({
 
         <div className="rounded-[30px] border border-slate-200/70 bg-white/78 p-7 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
           <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">
-            Operational posture
+            Data connections
           </h2>
           <div className="mt-5 space-y-4">
             <div className="grid gap-1 border-t border-slate-200/70 pt-4 first:border-t-0 first:pt-0">
-              <span className="text-sm font-semibold text-slate-500">Active sources</span>
+              <span className="text-sm font-semibold text-slate-500">Connected EHR sources</span>
               <span className="text-lg font-semibold text-slate-950">
                 {formatAnalyticsNumber(overview.summary.activeSources, "integer")}
               </span>
             </div>
             <div className="grid gap-1 border-t border-slate-200/70 pt-4">
-              <span className="text-sm font-semibold text-slate-500">Paused sources</span>
+              <span className="text-sm font-semibold text-slate-500">Paused connections</span>
               <span className="text-lg font-semibold text-slate-950">
                 {formatAnalyticsNumber(overview.operational.sourcesPaused, "integer")}
               </span>
             </div>
             <div className="grid gap-1 border-t border-slate-200/70 pt-4">
-              <span className="text-sm font-semibold text-slate-500">Sources in error</span>
+              <span className="text-sm font-semibold text-slate-500">Connections with errors</span>
               <span className="text-lg font-semibold text-slate-950">
                 {formatAnalyticsNumber(overview.operational.sourcesInError, "integer")}
               </span>

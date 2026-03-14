@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSession } from "@healthscope/auth/server";
 import { getAnalyticsOverview } from "../../../../../lib/analytics";
+import { getUserFacingMessage } from "../../../../../lib/user-error-messages";
 
 function parseDays(value: string | null) {
   if (!value) {
@@ -73,7 +74,7 @@ export async function GET(request: NextRequest) {
         },
         error: {
           code: "ANALYTICS_OVERVIEW_FAILED",
-          message: error instanceof Error ? error.message : "Unable to load analytics overview."
+          message: getUserFacingMessage(error, "api")
         }
       },
       { status: 500 }

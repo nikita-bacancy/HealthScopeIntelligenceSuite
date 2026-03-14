@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import { getUserFacingMessage } from "../../../lib/user-error-messages";
 
 export default function PasswordResetPage() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return (
       <main className="mx-auto min-h-screen max-w-xl px-6 py-10">
         <div className="rounded-[28px] border border-amber-200 bg-amber-50 p-6 text-sm text-amber-800">
-          Service role key or Supabase URL is not configured. This helper is disabled.
+          This feature is not available.
         </div>
       </main>
     );
@@ -32,12 +33,13 @@ export default function PasswordResetPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setError(json?.error?.message ?? "Failed to reset password.");
+        const raw = json?.error?.message ?? json?.error ?? "Request failed.";
+        setError(getUserFacingMessage(typeof raw === "string" ? new Error(raw) : raw, "password"));
       } else {
         setMessage("Password reset. You can now sign in with these credentials.");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to reset password.");
+      setError(getUserFacingMessage(err, "password"));
     } finally {
       setIsSubmitting(false);
     }
@@ -47,12 +49,12 @@ export default function PasswordResetPage() {
     <main className="mx-auto min-h-screen max-w-xl px-6 py-10">
       <div className="space-y-6 rounded-[28px] border border-slate-200/70 bg-white/80 p-8 shadow-[0_24px_80px_rgba(15,23,42,0.12)]">
         <div className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
-          Admin-only helper
+          Administrator only
         </div>
         <div className="space-y-3">
-          <h1 className="text-3xl font-semibold tracking-[-0.03em] text-slate-950">Reset demo password</h1>
+          <h1 className="text-3xl font-semibold tracking-[-0.03em] text-slate-950">Reset password</h1>
           <p className="text-sm leading-6 text-slate-600">
-            Uses the service role key to reset a user’s password and confirm their email. Do not expose this page in production.
+            Resets a user’s password. Do not expose this page in production.
           </p>
         </div>
         <form className="space-y-4" onSubmit={(e) => void onSubmit(e)}>

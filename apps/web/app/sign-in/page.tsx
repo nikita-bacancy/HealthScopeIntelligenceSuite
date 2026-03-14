@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DEFAULT_APP_NAME, hasSupabaseEnv } from "@healthscope/config";
 import { SignInForm } from "../../components/sign-in-form";
+import { getUserFacingMessageFromParam } from "../../lib/user-error-messages";
 
 export default function SignInPage({
   searchParams
@@ -25,38 +26,34 @@ export default function SignInPage({
                 Sign in to operate HealthScope.
               </h1>
               <p className="max-w-2xl text-base leading-8 text-slate-600">
-                Manage tenants, integration registrations, dashboards, and compliance workflows
-                through a hosted Supabase-backed control plane with server-enforced tenant
-                context.
+                Access dashboards, EHR integrations, and compliance workflows for your
+                organization.
               </p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
               <article className="rounded-3xl border border-slate-200/70 bg-white/70 p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  Session model
+                  Secure sign-in
                 </p>
                 <p className="mt-3 text-sm leading-6 text-slate-700">
-                  Supabase cloud auth with server-side session resolution and protected route
-                  guards.
+                  Sign in securely to access dashboards, analytics, and reports.
                 </p>
               </article>
               <article className="rounded-3xl border border-slate-200/70 bg-white/70 p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  Tenant scope
+                  Organization scope
                 </p>
                 <p className="mt-3 text-sm leading-6 text-slate-700">
-                  Active tenant selection persists across the authenticated workspace.
+                  Your access is scoped to your organization and assigned role.
                 </p>
               </article>
               <article className="rounded-3xl border border-slate-200/70 bg-white/70 p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  Runtime
+                  Platform status
                 </p>
                 <p className="mt-3 text-sm leading-6 text-slate-700">
-                  {configured
-                    ? "Supabase cloud environment detected."
-                    : "Supabase environment variables are not configured yet."}
+                  {configured ? "Ready. Sign-in is available." : "Setup in progress."}
                 </p>
               </article>
             </div>
@@ -78,17 +75,16 @@ export default function SignInPage({
               {DEFAULT_APP_NAME}
             </p>
             <h2 className="text-3xl font-semibold tracking-[-0.03em] text-slate-950">
-              Access the control plane
+              Sign in to HealthScope Analytics
             </h2>
             <p className="text-sm leading-6 text-slate-600">
-              Use your tenant credentials to manage the analytics platform and its operational
-              configuration.
+              Sign in with your organization credentials to access dashboards and analytics.
             </p>
           </div>
 
           {searchParams?.error ? (
             <p className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-              {searchParams.error}
+              {getUserFacingMessageFromParam(searchParams.error, "sign-in-url")}
             </p>
           ) : null}
 

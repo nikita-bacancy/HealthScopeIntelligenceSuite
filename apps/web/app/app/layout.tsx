@@ -8,10 +8,10 @@ const navItems = [
   { href: "/app", label: "Overview" },
   { href: "/app/dashboard", label: "Dashboard" },
   { href: "/app/analytics", label: "Analytics" },
-  { href: "/app/admin", label: "Tenant Admin" },
+  { href: "/app/admin", label: "Admin" },
   { href: "/app/integrations", label: "Integrations" },
-  { href: "/api/v1/auth/session", label: "Session API" },
-  { href: "/api/v1/compliance/audit-events", label: "Audit API" }
+  { href: "/api/v1/auth/session", label: "Session" },
+  { href: "/api/v1/compliance/audit-events", label: "Audit events" }
 ];
 
 export default async function AppLayout({
@@ -25,21 +25,21 @@ export default async function AppLayout({
 
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-4 py-6 sm:px-6 lg:px-10">
-      <div className="grid gap-4 xl:grid-cols-[290px_minmax(0,1fr)]">
-        <aside className="h-fit rounded-[24px] border border-slate-200/70 bg-white/78 p-5 shadow-[0_20px_70px_rgba(15,23,42,0.10)] backdrop-blur xl:sticky xl:top-6">
-          <div className="space-y-6">
+      <div className="grid gap-4 xl:grid-cols-[290px_minmax(0,1fr)] xl:items-stretch">
+        <aside className="flex flex-col rounded-[24px] border border-slate-200/70 bg-white/78 p-5 shadow-[0_20px_70px_rgba(15,23,42,0.10)] backdrop-blur xl:min-h-0">
+          <div className="flex flex-1 flex-col gap-6">
             <div className="space-y-3">
               <div className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
                 HealthScope
               </div>
               <div>
                 <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">
-                  Operations Console
+                  HealthScope Analytics
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   Signed in as {session.context.actor.email}
                 </p>
-                <p className="text-sm font-medium text-slate-500">Tenant: {tenantId}</p>
+                <p className="text-sm font-medium text-slate-500">Workspace: {tenantId}</p>
               </div>
             </div>
 
@@ -47,7 +47,7 @@ export default async function AppLayout({
               <form action={switchTenantAction} className="space-y-3 rounded-3xl border border-slate-200/80 bg-slate-50/80 p-4">
                 <label className="block space-y-2">
                   <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Active tenant
+                    Organization
                   </span>
                   <select
                     className="w-full rounded-2xl border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
@@ -65,7 +65,7 @@ export default async function AppLayout({
                   className="inline-flex w-full items-center justify-center rounded-full border border-slate-300/80 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-white"
                   type="submit"
                 >
-                  Switch tenant
+                  Switch organization
                 </button>
               </form>
             ) : null}
@@ -84,15 +84,16 @@ export default async function AppLayout({
 
             <div className="rounded-3xl border border-slate-200/80 bg-white/70 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                Workspace policy
+                Access
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Tenant context is resolved server-side and reused across admin, integrations, and
-                compliance routes.
+                Your access is based on your organization and role.
               </p>
             </div>
 
-            <SignOutButton />
+            <div className="mt-auto pt-4">
+              <SignOutButton />
+            </div>
           </div>
         </aside>
 

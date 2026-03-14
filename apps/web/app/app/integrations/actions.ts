@@ -7,6 +7,7 @@ import { requireTenantAdminSession } from "../../../lib/auth-guards";
 import { insertAuditEvent } from "../../../lib/admin";
 import { upsertSourceCredentials } from "../../../lib/credentials";
 import { createSyncJob, getQueuedJobs, simulateRunJob } from "../../../lib/integration-jobs";
+import { getUserFacingMessage } from "../../../lib/user-error-messages";
 
 function readValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -113,10 +114,7 @@ export async function createFhirSourceAction(formData: FormData) {
     await insertAuditEvent(session.context, "integration.fhir_source.created", data.id);
     revalidatePath("/app/integrations");
   } catch (error) {
-    integrationsRedirect(
-      "error",
-      error instanceof Error ? error.message : "Unable to create FHIR source."
-    );
+    integrationsRedirect("error", getUserFacingMessage(error, "integrations"));
   }
 
   integrationsRedirect("success", "FHIR source registered.");
@@ -194,10 +192,7 @@ export async function updateDataSourceAction(formData: FormData) {
     await insertAuditEvent(session.context, "integration.source.updated", sourceId);
     revalidatePath("/app/integrations");
   } catch (error) {
-    integrationsRedirect(
-      "error",
-      error instanceof Error ? error.message : "Unable to update source."
-    );
+    integrationsRedirect("error", getUserFacingMessage(error, "integrations"));
   }
 
   integrationsRedirect("success", "Source updated.");
@@ -209,7 +204,7 @@ export async function queueSyncJobAction(formData: FormData) {
   const dataSourceId = readValue(formData, "sourceId");
 
   if (!tenantId || !dataSourceId) {
-    integrationsRedirect("error", "Missing tenant or source.");
+    integrationsRedirect("error", getUserFacingMessage(new Error("Missing tenant or source"), "integrations"));
   }
 
   try {
@@ -222,10 +217,7 @@ export async function queueSyncJobAction(formData: FormData) {
     revalidatePath("/app/integrations");
     integrationsRedirect("success", "Sync job queued.");
   } catch (error) {
-    integrationsRedirect(
-      "error",
-      error instanceof Error ? error.message : "Unable to queue sync job."
-    );
+    integrationsRedirect("error", getUserFacingMessage(error, "integrations"));
   }
 }
 
@@ -248,10 +240,7 @@ export async function simulateRunQueuedJobsAction() {
     revalidatePath("/app/integrations");
     integrationsRedirect("success", queued.length ? "Queued jobs marked succeeded." : "No queued jobs.");
   } catch (error) {
-    integrationsRedirect(
-      "error",
-      error instanceof Error ? error.message : "Unable to simulate job run."
-    );
+    integrationsRedirect("error", getUserFacingMessage(error, "integrations"));
   }
 }
 
@@ -262,7 +251,7 @@ export async function upsertCredentialsAction(formData: FormData) {
   const authType = readValue(formData, "authType") || "oauth2";
 
   if (!tenantId || !dataSourceId) {
-    integrationsRedirect("error", "Missing tenant or source.");
+    integrationsRedirect("error", getUserFacingMessage(new Error("Missing tenant or source"), "integrations"));
   }
 
   try {
@@ -295,9 +284,6 @@ export async function upsertCredentialsAction(formData: FormData) {
     revalidatePath("/app/integrations");
     integrationsRedirect("success", "Credentials saved.");
   } catch (error) {
-    integrationsRedirect(
-      "error",
-      error instanceof Error ? error.message : "Unable to save credentials."
-    );
+    integrationsRedirect("error", getUserFacingMessage(error, "integrations"));
   }
 }

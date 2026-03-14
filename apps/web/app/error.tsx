@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useToast } from "../components/toast";
+import { getUserFacingMessage } from "../lib/user-error-messages";
 
 export default function GlobalError({
   error,
@@ -11,14 +12,18 @@ export default function GlobalError({
   reset: () => void;
 }) {
   const { toast } = useToast();
+  const message = getUserFacingMessage(error, "global");
 
   useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      console.error("GlobalError:", error?.message ?? error, error?.digest);
+    }
     toast({
       title: "Something went wrong",
-      description: error.message ?? "An unexpected error occurred.",
+      description: message,
       tone: "error"
     });
-  }, [error, toast]);
+  }, [error, toast, message]);
 
   return (
     <html>
@@ -29,7 +34,7 @@ export default function GlobalError({
               Something went wrong
             </h1>
             <p className="mt-3 text-sm leading-6 text-amber-800">
-              {error.message ?? "An unexpected error occurred. Please try again."}
+              {message}
             </p>
             <div className="mt-5 flex justify-center gap-3">
               <button

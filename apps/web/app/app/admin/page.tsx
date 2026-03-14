@@ -1,6 +1,8 @@
 import { getAdminOverview } from "../../../lib/admin";
 import { requireTenantAdminSession } from "../../../lib/auth-guards";
 import { DataTable, type DataTableColumn } from "../../../components/data-table";
+import { FeedbackBanner } from "../../../components/feedback-banner";
+import { getUserFacingMessageFromParam } from "../../../lib/user-error-messages";
 import {
   createFacilityAction,
   createOrganizationAction,
@@ -15,7 +17,16 @@ const ROLE_OPTIONS = [
   "finance_analyst",
   "compliance_admin",
   "integration_engineer"
-];
+] as const;
+
+const ROLE_LABELS: Record<(typeof ROLE_OPTIONS)[number], string> = {
+  tenant_admin: "Administrator",
+  executive: "Executive",
+  clinical_analyst: "Clinical analyst",
+  finance_analyst: "Finance analyst",
+  compliance_admin: "Compliance admin",
+  integration_engineer: "Integration manager"
+};
 
 const inputClassName =
   "w-full rounded-2xl border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100";
@@ -48,21 +59,6 @@ const facilityColumns: Array<
   { key: "timezone", header: "Timezone" }
 ];
 
-function FeedbackBanner({
-  tone,
-  message
-}: {
-  tone: "success" | "error";
-  message: string;
-}) {
-  const toneClassName =
-    tone === "success"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-      : "border-rose-200 bg-rose-50 text-rose-700";
-
-  return <p className={`rounded-2xl border px-4 py-3 text-sm ${toneClassName}`}>{message}</p>;
-}
-
 export default async function TenantAdminPage({
   searchParams
 }: {
@@ -92,15 +88,14 @@ export default async function TenantAdminPage({
       <section className="rounded-[24px] border border-slate-200/70 bg-white/78 p-5 shadow-[0_20px_70px_rgba(15,23,42,0.10)] backdrop-blur sm:p-6 md:p-8 xl:p-10">
         <div className="space-y-6">
           <div className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-            Tenant admin
+            Administration
           </div>
           <div className="space-y-4">
             <h1 className="text-4xl font-semibold tracking-[-0.04em] text-slate-950 md:text-5xl">
-              Manage the tenant control plane.
+              Manage organizations, facilities, and user access.
             </h1>
             <p className="max-w-3xl text-base leading-8 text-slate-600">
-              These flows write directly to the linked Supabase cloud project after verifying that
-              the current session has tenant admin rights for the active tenant.
+              Create organizations and facilities, invite users, and assign roles and access scope.
             </p>
           </div>
 
@@ -108,7 +103,12 @@ export default async function TenantAdminPage({
             {searchParams?.success ? (
               <FeedbackBanner message={searchParams.success} tone="success" />
             ) : null}
-            {searchParams?.error ? <FeedbackBanner message={searchParams.error} tone="error" /> : null}
+            {searchParams?.error ? (
+              <FeedbackBanner
+                message={getUserFacingMessageFromParam(searchParams.error, "admin")}
+                tone="error"
+              />
+            ) : null}
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -117,7 +117,7 @@ export default async function TenantAdminPage({
               <p className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">
                 {overview.organizations.length}
               </p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Tenant-scoped org records.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Organizations in your health system.</p>
             </article>
             <article className="rounded-3xl border border-slate-200/80 bg-white/80 p-5">
               <h3 className="text-sm font-semibold text-slate-500">Facilities</h3>
@@ -129,21 +129,21 @@ export default async function TenantAdminPage({
               </p>
             </article>
             <article className="rounded-3xl border border-slate-200/80 bg-white/80 p-5">
-              <h3 className="text-sm font-semibold text-slate-500">Memberships</h3>
+              <h3 className="text-sm font-semibold text-slate-500">User access</h3>
               <p className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">
                 {overview.memberships.length}
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Role assignments inside the active tenant.
+                User access and roles.
               </p>
             </article>
             <article className="rounded-3xl border border-slate-200/80 bg-white/80 p-5">
-              <h3 className="text-sm font-semibold text-slate-500">FHIR sources</h3>
+              <h3 className="text-sm font-semibold text-slate-500">EHR connections</h3>
               <p className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">
                 {overview.dataSources.length}
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Registered source systems for this tenant.
+                Registered EHR or data sources.
               </p>
             </article>
           </div>
@@ -240,7 +240,7 @@ export default async function TenantAdminPage({
             Invite user and assign membership
           </h2>
           <p className="text-sm leading-6 text-slate-600">
-            Create access for analysts, executives, or operations staff within the active tenant.
+            Create access for analysts, executives, or operations staff.
           </p>
         </div>
 
@@ -264,7 +264,7 @@ export default async function TenantAdminPage({
             <select className={inputClassName} defaultValue="executive" name="roleName">
               {ROLE_OPTIONS.map((role) => (
                 <option key={role} value={role}>
-                  {role}
+                  {ROLE_LABELS[role]}
                 </option>
               ))}
             </select>
@@ -272,7 +272,7 @@ export default async function TenantAdminPage({
           <label className="block space-y-2">
             <span className={labelClassName}>Organization scope</span>
             <select className={inputClassName} defaultValue="" name="organizationId">
-              <option value="">All organizations in tenant</option>
+              <option value="">All organizations</option>
               {overview.organizations.map((organization) => (
                 <option key={organization.id} value={organization.id}>
                   {organization.name}
@@ -305,14 +305,14 @@ export default async function TenantAdminPage({
       <section className="grid gap-5 sm:gap-6 xl:grid-cols-2">
         <div className="rounded-[30px] border border-slate-200/70 bg-white/78 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6 md:p-7">
           <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">Organizations</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            Organization records currently available for the active tenant.
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+            Organization records currently available.
           </p>
           <div className="mt-6">
             <DataTable
               columns={organizationColumns}
               data={organizationRows}
-              emptyMessage="No organizations have been created for this tenant yet."
+              emptyMessage="No organizations have been created yet."
             />
           </div>
         </div>
@@ -326,7 +326,7 @@ export default async function TenantAdminPage({
             <DataTable
               columns={facilityColumns}
               data={facilityRows}
-              emptyMessage="No facilities have been created for this tenant yet."
+              emptyMessage="No facilities have been created yet."
             />
           </div>
         </div>
@@ -339,7 +339,7 @@ export default async function TenantAdminPage({
           </h2>
           <p className="text-sm leading-6 text-slate-600">
             Update display names, roles, organization scope, facility scope, and suspension state
-            for users in the active tenant.
+            for users.
           </p>
         </div>
 
@@ -365,7 +365,7 @@ export default async function TenantAdminPage({
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-                      {membership.role_name}
+                      {ROLE_LABELS[membership.role_name as (typeof ROLE_OPTIONS)[number]] ?? membership.role_name}
                     </span>
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${
@@ -394,7 +394,7 @@ export default async function TenantAdminPage({
                     <select className={inputClassName} defaultValue={membership.role_name} name="roleName">
                       {ROLE_OPTIONS.map((role) => (
                         <option key={role} value={role}>
-                          {role}
+                          {ROLE_LABELS[role]}
                         </option>
                       ))}
                     </select>
@@ -413,7 +413,7 @@ export default async function TenantAdminPage({
                       defaultValue={membership.organization_id ?? ""}
                       name="organizationId"
                     >
-                      <option value="">Tenant-wide</option>
+                      <option value="">All organizations</option>
                       {overview.organizations.map((organization) => (
                         <option key={organization.id} value={organization.id}>
                           {organization.name}
@@ -449,7 +449,7 @@ export default async function TenantAdminPage({
             ))
           ) : (
             <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 px-5 py-8 text-sm text-slate-500">
-              No memberships exist for the active tenant yet.
+              No users have been invited yet.
             </div>
           )}
         </div>

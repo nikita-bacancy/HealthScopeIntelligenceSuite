@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireSession } from "@healthscope/auth/server";
 import { processQueuedJobs } from "../../../../../lib/job-runner";
+import { getUserFacingMessage } from "../../../../../lib/user-error-messages";
 
 function requireRunnerToken(request: Request) {
   const expected = process.env.RUNNER_TOKEN;
@@ -61,7 +62,7 @@ export async function POST(request: Request) {
         meta: { version: "v1" },
         error: {
           code: "JOB_RUN_FAILED",
-          message: error instanceof Error ? error.message : "Unable to run jobs."
+          message: getUserFacingMessage(error, "api")
         }
       },
       { status: 500 }

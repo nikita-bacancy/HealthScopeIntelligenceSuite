@@ -3,6 +3,7 @@ import { formatAnalyticsNumber } from "../../../lib/analytics-presenter";
 import { getAnalyticsOverview, getTenantReferenceData } from "../../../lib/analytics";
 import { loadSnapshots } from "../../../lib/snapshots";
 import { requireAppSession } from "../../../lib/auth-guards";
+import { getUserFacingMessage } from "../../../lib/user-error-messages";
 
 const inputClassName =
   "w-full rounded-2xl border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100";
@@ -134,9 +135,9 @@ export default async function DashboardPage({
   if (!session.context.activeTenant && session.context.memberships.length === 0) {
     return (
       <section className="rounded-[24px] border border-amber-200 bg-amber-50/80 p-6 shadow-sm sm:p-7 md:p-8">
-        <h1 className="text-2xl font-semibold tracking-[-0.03em] text-amber-900">No tenant access</h1>
+        <h1 className="text-2xl font-semibold tracking-[-0.03em] text-amber-900">No organization access</h1>
         <p className="mt-3 text-sm leading-6 text-amber-800">
-          Your account does not have an active tenant yet. Ask a tenant admin to invite you or select a tenant once available.
+          Your account doesn't have access to an organization yet. Ask an administrator to invite you.
         </p>
       </section>
     );
@@ -155,14 +156,15 @@ export default async function DashboardPage({
       loadSnapshots(session.context.activeTenant?.tenantId ?? session.context.memberships[0]?.tenantId ?? "")
     ]);
   } catch (error) {
+    const message = getUserFacingMessage(error, "dashboard");
     return (
       <section className="rounded-[24px] border border-amber-200 bg-amber-50/80 p-6 shadow-sm sm:p-7 md:p-8">
         <h1 className="text-2xl font-semibold tracking-[-0.03em] text-amber-900">Dashboard unavailable</h1>
         <p className="mt-3 text-sm leading-6 text-amber-800">
-          {error instanceof Error ? error.message : "Unable to load dashboard data for this tenant right now."}
+          {message}
         </p>
         <p className="mt-4 text-sm text-amber-800">
-          Try switching tenants in the sidebar or reloading. Confirm your account has an active tenant membership.
+          Try switching organizations in the sidebar or reloading. Confirm you have access to an organization.
         </p>
       </section>
     );
@@ -196,8 +198,7 @@ export default async function DashboardPage({
               Clinical, financial, and operational KPIs at a glance.
             </h1>
             <p className="max-w-3xl text-base leading-8 text-slate-600">
-              Tenant-scoped metrics drawn from the warehouse and integration posture. Adjust the
-              window and scope to focus on a specific organization or facility.
+              Metrics for your organization and facilities. Adjust the time window and scope below.
             </p>
           </div>
           <form className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -248,7 +249,7 @@ export default async function DashboardPage({
         <Stat
           label="Total patients"
           value={formatAnalyticsNumber(overview.summary.totalPatients, "integer")}
-          note="Patients in scope for this tenant/window."
+          note="Patients in scope for this organization and window."
         />
         <Stat
           label="Encounters"
@@ -339,22 +340,22 @@ export default async function DashboardPage({
 
       <section className="grid gap-4 sm:gap-6 xl:grid-cols-2">
         <div className="rounded-[24px] border border-slate-200/70 bg-white/78 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur md:p-7">
-          <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">Operational posture</h2>
+          <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">Data connections</h2>
           <div className="mt-5 space-y-4">
             <div className="grid gap-1 border-t border-slate-200/70 pt-4 first:border-t-0 first:pt-0">
-              <span className="text-sm font-semibold text-slate-500">Active sources</span>
+              <span className="text-sm font-semibold text-slate-500">Connected EHR sources</span>
               <span className="text-lg font-semibold text-slate-950">
                 {formatAnalyticsNumber(overview.summary.activeSources, "integer")}
               </span>
             </div>
             <div className="grid gap-1 border-t border-slate-200/70 pt-4">
-              <span className="text-sm font-semibold text-slate-500">Sources in error</span>
+              <span className="text-sm font-semibold text-slate-500">Connections with errors</span>
               <span className="text-lg font-semibold text-slate-950">
                 {formatAnalyticsNumber(overview.operational.sourcesInError, "integer")}
               </span>
             </div>
             <div className="grid gap-1 border-t border-slate-200/70 pt-4">
-              <span className="text-sm font-semibold text-slate-500">Sources paused</span>
+              <span className="text-sm font-semibold text-slate-500">Paused connections</span>
               <span className="text-lg font-semibold text-slate-950">
                 {formatAnalyticsNumber(overview.operational.sourcesPaused, "integer")}
               </span>
@@ -372,7 +373,7 @@ export default async function DashboardPage({
           <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">Alerts & follow-ups</h2>
           <div className="mt-4 space-y-3 text-sm text-slate-700">
             <p>• If denial rate &gt; 0, review claims in the last window.</p>
-            <p>• If sources in error &gt; 0, open Integrations and run queued jobs.</p>
+            <p>• If connections have errors, open Integrations to run or fix data sync.</p>
             <p>• Use Analytics for deeper drill-down on quality adherence.</p>
           </div>
         <div className="mt-4 flex flex-wrap gap-3">
@@ -386,7 +387,7 @@ export default async function DashboardPage({
             className="inline-flex items-center justify-center rounded-full border border-slate-300/80 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white"
             href="/api/v1/analytics/overview"
           >
-            View API JSON
+            Export data
           </Link>
         </div>
         </div>
@@ -395,24 +396,24 @@ export default async function DashboardPage({
       <section className="rounded-[24px] border border-slate-200/70 bg-white/78 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur md:p-7">
         <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">Trends</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Simple trend bars from stored snapshots (latest 10 points).
+          Recent patient and encounter trends.
         </p>
         <div className="mt-4 grid gap-4 sm:gap-6 md:grid-cols-2">
           <div className="space-y-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4">
             <MiniBar label="Patients" values={patientTrend.slice(0, 10).reverse()} />
-            <Sparkline label="Patients (spark)" values={patientTrend.slice(0, 10).reverse()} stroke="#10b981" />
+            <Sparkline label="Patients (trend)" values={patientTrend.slice(0, 10).reverse()} stroke="#10b981" />
           </div>
           <div className="space-y-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4">
             <MiniBar label="Encounters" values={encounterTrend.slice(0, 10).reverse()} color="bg-amber-500" />
-            <Sparkline label="Encounters (spark)" values={encounterTrend.slice(0, 10).reverse()} stroke="#f59e0b" />
+            <Sparkline label="Encounters (trend)" values={encounterTrend.slice(0, 10).reverse()} stroke="#f59e0b" />
           </div>
         </div>
       </section>
 
       <section className="rounded-[24px] border border-slate-200/70 bg-white/78 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur md:p-7">
-        <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">Snapshot history</h2>
+        <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">Metric history</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Recent metric snapshots stored for this tenant.
+          Stored metrics for this organization.
         </p>
         <div className="mt-4 overflow-x-auto rounded-3xl border border-slate-200/80 bg-white/80 shadow-sm">
           <div className="overflow-x-auto">
@@ -434,7 +435,7 @@ export default async function DashboardPage({
                 {snapshots.length === 0 ? (
                   <tr>
                     <td className="px-4 py-6 text-sm text-slate-500" colSpan={3}>
-                      No snapshots yet. Run a sync to generate metrics.
+                      No metrics yet. Run a data sync from Integrations.
                     </td>
                   </tr>
                 ) : (

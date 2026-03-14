@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseAdminClient } from "@healthscope/auth/supabase";
 import { requireTenantAdminSession } from "../../../lib/auth-guards";
 import { insertAuditEvent } from "../../../lib/admin";
+import { getUserFacingMessage } from "../../../lib/user-error-messages";
 
 const ALLOWED_ROLES = new Set([
   "tenant_admin",
@@ -111,7 +112,7 @@ export async function createOrganizationAction(formData: FormData) {
     revalidatePath("/app");
     revalidatePath("/app/admin");
   } catch (error) {
-    adminRedirect("error", error instanceof Error ? error.message : "Unable to create organization.");
+    adminRedirect("error", getUserFacingMessage(error, "admin"));
   }
 
   adminRedirect("success", "Organization created.");
@@ -159,7 +160,7 @@ export async function createFacilityAction(formData: FormData) {
     await insertAuditEvent(session.context, "tenant.facility.created", data.id);
     revalidatePath("/app/admin");
   } catch (error) {
-    adminRedirect("error", error instanceof Error ? error.message : "Unable to create facility.");
+    adminRedirect("error", getUserFacingMessage(error, "admin"));
   }
 
   adminRedirect("success", "Facility created.");
@@ -262,10 +263,7 @@ export async function inviteMembershipAction(formData: FormData) {
     revalidatePath("/app");
     revalidatePath("/app/admin");
   } catch (error) {
-    adminRedirect(
-      "error",
-      error instanceof Error ? error.message : "Unable to invite user and assign membership."
-    );
+    adminRedirect("error", getUserFacingMessage(error, "admin"));
   }
 
   adminRedirect("success", "User invited and membership assigned.");
@@ -350,10 +348,7 @@ export async function updateMembershipAction(formData: FormData) {
     revalidatePath("/app");
     revalidatePath("/app/admin");
   } catch (error) {
-    adminRedirect(
-      "error",
-      error instanceof Error ? error.message : "Unable to update tenant membership."
-    );
+    adminRedirect("error", getUserFacingMessage(error, "admin"));
   }
 
   adminRedirect("success", "User access updated.");

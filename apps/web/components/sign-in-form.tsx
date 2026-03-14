@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@healthscope/auth/browser";
+import { getUserFacingMessage } from "../lib/user-error-messages";
 
 type SignInFormProps = {
   enabled: boolean;
@@ -27,18 +28,18 @@ export function SignInForm({ enabled }: SignInFormProps) {
 
   const submitDisabled = !enabled || isPending || isSubmitting;
   const disabledReason = !enabled
-    ? "Supabase environment variables are not loaded in the web app."
+    ? "Sign-in is not available right now."
     : isPending
-      ? "A route transition is in progress."
+      ? "Please wait..."
       : isSubmitting
-        ? "A sign-in request is already running."
+        ? "Please wait..."
         : null;
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!enabled || !supabase) {
-      setError("Supabase environment variables are not configured.");
+      setError(getUserFacingMessage(new Error("Sign-in is not available."), "sign-in"));
       return;
     }
 
@@ -64,7 +65,7 @@ export function SignInForm({ enabled }: SignInFormProps) {
       });
 
       if (signInError) {
-        setError(signInError.message);
+        setError(getUserFacingMessage(signInError, "sign-in"));
         setIsSubmitting(false);
         return;
       }
@@ -88,7 +89,7 @@ export function SignInForm({ enabled }: SignInFormProps) {
     });
 
     if (signUpError) {
-      setError(signUpError.message);
+      setError(getUserFacingMessage(signUpError, "sign-in"));
       setIsSubmitting(false);
       return;
     }
@@ -148,8 +149,8 @@ export function SignInForm({ enabled }: SignInFormProps) {
         </p>
         <p className="text-sm leading-6 text-slate-600">
           {mode === "sign-in"
-            ? "Use your existing credentials to enter the HealthScope control plane."
-            : "Create a workspace account first. A tenant admin can assign your memberships after sign-up."}
+            ? "Sign in with your account to access HealthScope Analytics."
+            : "Create an account. An administrator can grant you access to your organization."}
         </p>
       </div>
 
@@ -196,11 +197,6 @@ export function SignInForm({ enabled }: SignInFormProps) {
               ? "Sign in"
               : "Create HealthScope account"}
         </button>
-
-        <p className="text-xs leading-5 text-slate-500">
-          OAuth sign-in is temporarily disabled while provider setup is finalized. Email and
-          password remain the supported access method for development.
-        </p>
 
         {notice ? (
           <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">

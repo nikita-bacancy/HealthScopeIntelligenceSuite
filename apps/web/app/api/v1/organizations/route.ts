@@ -4,6 +4,7 @@ import { requireSession } from "@healthscope/auth/server";
 import { createSupabaseServerClient } from "@healthscope/auth/supabase";
 import { hasSupabaseEnv } from "@healthscope/config";
 import { organizationSeed } from "@healthscope/data-model";
+import { getUserFacingMessage } from "../../../../lib/user-error-messages";
 
 export async function GET(request: NextRequest) {
   if (!hasSupabaseEnv()) {
@@ -61,7 +62,7 @@ export async function GET(request: NextRequest) {
         },
         error: {
           code: "SUPABASE_NOT_CONFIGURED",
-          message: "Supabase environment variables are not configured."
+          message: getUserFacingMessage(new Error("Supabase"), "api")
         }
       },
       { status: 503 }
@@ -84,7 +85,7 @@ export async function GET(request: NextRequest) {
         },
         error: {
           code: "ORGANIZATION_LOOKUP_FAILED",
-          message: error.message
+          message: getUserFacingMessage(error, "api")
         }
       },
       { status: 500 }
