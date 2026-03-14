@@ -57,3 +57,30 @@ code {
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
 }
+
+/* Sonner toasts: bottom-right, opaque backgrounds for visibility */
+[data-sonner-toast] {
+  background: #ffffff !important;
+  color: var(--text) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: 0 10px 40px rgba(17, 36, 51, 0.15) !important;
+  font-family: var(--font-sans);
+}
+[data-sonner-toast][data-type="success"] {
+  background: #d1fae5 !important;
+  color: #065f46 !important;
+  border-color: #6ee7b7 !important;
+}
+[data-sonner-toast][data-type="error"] {
+  background: #fee2e2 !important;
+  color: #9f1239 !important;
+  border-color: #fca5a5 !important;
+}
+[data-sonner-toast][data-type="warning"] {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: #fcd34d !important;
+}
+.sonner-theme-description {
+  color: var(--muted) !important;
+}

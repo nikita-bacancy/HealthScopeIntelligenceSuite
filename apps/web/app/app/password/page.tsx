@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { getUserFacingMessage } from "../../../lib/user-error-messages";
+import { Button } from "../../../components/button";
 
 export default function PasswordResetPage() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -78,13 +79,15 @@ export default function PasswordResetPage() {
               type="password"
             />
           </label>
-          <button
-            className="inline-flex items-center justify-center rounded-full bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(16,185,129,0.28)] transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+          <Button
+            className="w-full"
             disabled={isSubmitting}
+            loading={isSubmitting}
+            loadingLabel="Resetting..."
             type="submit"
           >
-            {isSubmitting ? "Resetting..." : "Reset password"}
-          </button>
+            Reset password
+          </Button>
         </form>
         {message ? (
           <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">

@@ -3,6 +3,7 @@ import { getAnalyticsOverview, getTenantReferenceData } from "../../../lib/analy
 import { formatAnalyticsNumber } from "../../../lib/analytics-presenter";
 import { requireAppSession } from "../../../lib/auth-guards";
 import { getUserFacingMessage } from "../../../lib/user-error-messages";
+import { FilterForm, FilterFormSubmitButton } from "../../../components/filter-form";
 
 const inputClassName =
   "w-full rounded-2xl border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100";
@@ -115,7 +116,7 @@ export default async function AnalyticsPage({
           </Link>
         </div>
 
-        <form className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <FilterForm pathname="/app/analytics" className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <label className="block space-y-2">
             <span className={labelClassName}>Window</span>
             <select className={inputClassName} defaultValue={String(overview.windowDays)} name="days">
@@ -148,14 +149,11 @@ export default async function AnalyticsPage({
             </select>
           </label>
           <div className="flex items-end">
-            <button
-              className="inline-flex w-full items-center justify-center rounded-full bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(16,185,129,0.28)] transition hover:bg-emerald-600"
-              type="submit"
-            >
+            <FilterFormSubmitButton className="w-full" loadingLabel="Applying...">
               Apply filters
-            </button>
+            </FilterFormSubmitButton>
           </div>
-        </form>
+        </FilterForm>
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

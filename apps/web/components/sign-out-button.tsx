@@ -1,12 +1,15 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@healthscope/auth/browser";
+import { Button } from "./button";
 
 export function SignOutButton() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const loading = isSigningOut || isPending;
 
   async function onSignOut() {
     const supabase = createSupabaseBrowserClient();
@@ -16,22 +19,28 @@ export function SignOutButton() {
       return;
     }
 
-    await supabase.auth.signOut();
-
-    startTransition(() => {
-      router.push("/sign-in");
-      router.refresh();
-    });
+    setIsSigningOut(true);
+    try {
+      await supabase.auth.signOut();
+      startTransition(() => {
+        router.push("/sign-in");
+        router.refresh();
+      });
+    } finally {
+      setIsSigningOut(false);
+    }
   }
 
   return (
-    <button
-      className="flex w-full items-center justify-center rounded-full border border-slate-300/80 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-      disabled={isPending}
-      onClick={() => void onSignOut()}
+    <Button
+      className="w-full"
+      loading={loading}
+      loadingLabel="Signing out..."
       type="button"
+      variant="secondary"
+      onClick={() => void onSignOut()}
     >
-      {isPending ? "Signing out..." : "Sign out"}
-    </button>
+      Sign out
+    </Button>
   );
 }

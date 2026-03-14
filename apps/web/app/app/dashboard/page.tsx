@@ -4,6 +4,7 @@ import { getAnalyticsOverview, getTenantReferenceData } from "../../../lib/analy
 import { loadSnapshots } from "../../../lib/snapshots";
 import { requireAppSession } from "../../../lib/auth-guards";
 import { getUserFacingMessage } from "../../../lib/user-error-messages";
+import { FilterForm, FilterFormSubmitButton } from "../../../components/filter-form";
 
 const inputClassName =
   "w-full rounded-2xl border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100";
@@ -201,7 +202,7 @@ export default async function DashboardPage({
               Metrics for your organization and facilities. Adjust the time window and scope below.
             </p>
           </div>
-          <form className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <FilterForm pathname="/app/dashboard" className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
             <label className="block space-y-2">
               <span className={labelClassName}>Window</span>
               <select className={inputClassName} defaultValue={String(overview.windowDays)} name="days">
@@ -234,14 +235,11 @@ export default async function DashboardPage({
               </select>
             </label>
             <div className="flex items-end">
-              <button
-                className="inline-flex w-full items-center justify-center rounded-full bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(16,185,129,0.28)] transition hover:bg-emerald-600"
-                type="submit"
-              >
+              <FilterFormSubmitButton className="w-full" loadingLabel="Applying...">
                 Apply filters
-              </button>
+              </FilterFormSubmitButton>
             </div>
-          </form>
+          </FilterForm>
         </div>
       </section>
 

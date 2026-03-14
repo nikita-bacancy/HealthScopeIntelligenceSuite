@@ -1,11 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createSupabaseAdminClient } from "@healthscope/auth/supabase";
 import { requireTenantAdminSession } from "../../../lib/auth-guards";
 import { insertAuditEvent } from "../../../lib/admin";
 import { getUserFacingMessage } from "../../../lib/user-error-messages";
+
+export type AdminActionResult = { ok: true; message: string } | { ok: false; error: string };
 
 const ALLOWED_ROLES = new Set([
   "tenant_admin",
@@ -65,19 +66,11 @@ async function assertFacilityInTenant(
   return data;
 }
 
-function adminRedirect(kind: "success" | "error", message: string) {
-  const params = new URLSearchParams({
-    [kind]: message
-  });
-
-  redirect(`/app/admin?${params.toString()}`);
-}
-
 function normalizeMembershipStatus(value: string) {
   return value === "suspended" ? "suspended" : "active";
 }
 
-export async function createOrganizationAction(formData: FormData) {
+export async function createOrganizationAction(formData: FormData): Promise<AdminActionResult> {
   try {
     const session = await requireTenantAdminSession();
     const client = createSupabaseAdminClient();
@@ -111,14 +104,13 @@ export async function createOrganizationAction(formData: FormData) {
     await insertAuditEvent(session.context, "tenant.organization.created", data.id);
     revalidatePath("/app");
     revalidatePath("/app/admin");
+    return { ok: true, message: "Organization created." };
   } catch (error) {
-    adminRedirect("error", getUserFacingMessage(error, "admin"));
+    return { ok: false, error: getUserFacingMessage(error, "admin") };
   }
-
-  adminRedirect("success", "Organization created.");
 }
 
-export async function createFacilityAction(formData: FormData) {
+export async function createFacilityAction(formData: FormData): Promise<AdminActionResult> {
   try {
     const session = await requireTenantAdminSession();
     const client = createSupabaseAdminClient();
@@ -159,14 +151,13 @@ export async function createFacilityAction(formData: FormData) {
 
     await insertAuditEvent(session.context, "tenant.facility.created", data.id);
     revalidatePath("/app/admin");
+    return { ok: true, message: "Facility created." };
   } catch (error) {
-    adminRedirect("error", getUserFacingMessage(error, "admin"));
+    return { ok: false, error: getUserFacingMessage(error, "admin") };
   }
-
-  adminRedirect("success", "Facility created.");
 }
 
-export async function inviteMembershipAction(formData: FormData) {
+export async function inviteMembershipAction(formData: FormData): Promise<AdminActionResult> {
   try {
     const session = await requireTenantAdminSession();
     const client = createSupabaseAdminClient();
@@ -262,14 +253,13 @@ export async function inviteMembershipAction(formData: FormData) {
     await insertAuditEvent(session.context, "tenant.membership.upserted", membership.id);
     revalidatePath("/app");
     revalidatePath("/app/admin");
+    return { ok: true, message: "User invited and membership assigned." };
   } catch (error) {
-    adminRedirect("error", getUserFacingMessage(error, "admin"));
+    return { ok: false, error: getUserFacingMessage(error, "admin") };
   }
-
-  adminRedirect("success", "User invited and membership assigned.");
 }
 
-export async function updateMembershipAction(formData: FormData) {
+export async function updateMembershipAction(formData: FormData): Promise<AdminActionResult> {
   try {
     const session = await requireTenantAdminSession();
     const client = createSupabaseAdminClient();
@@ -347,9 +337,8 @@ export async function updateMembershipAction(formData: FormData) {
     await insertAuditEvent(session.context, "tenant.membership.updated", membershipId);
     revalidatePath("/app");
     revalidatePath("/app/admin");
+    return { ok: true, message: "User access updated." };
   } catch (error) {
-    adminRedirect("error", getUserFacingMessage(error, "admin"));
+    return { ok: false, error: getUserFacingMessage(error, "admin") };
   }
-
-  adminRedirect("success", "User access updated.");
 }

@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@healthscope/auth/browser";
 import { getUserFacingMessage } from "../lib/user-error-messages";
+import { Button } from "./button";
 
 type SignInFormProps = {
   enabled: boolean;
@@ -184,19 +185,15 @@ export function SignInForm({ enabled }: SignInFormProps) {
           <input className={inputClassName} name="password" required type="password" />
         </label>
 
-        <button
-          className="inline-flex w-full items-center justify-center rounded-full bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(16,185,129,0.28)] transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+        <Button
+          className="w-full"
           disabled={submitDisabled}
+          loading={isSubmitting}
+          loadingLabel={mode === "sign-in" ? "Signing in..." : "Creating account..."}
           type="submit"
         >
-          {isSubmitting
-            ? mode === "sign-in"
-              ? "Signing in..."
-              : "Creating account..."
-            : mode === "sign-in"
-              ? "Sign in"
-              : "Create HealthScope account"}
-        </button>
+          {mode === "sign-in" ? "Sign in" : "Create HealthScope account"}
+        </Button>
 
         {notice ? (
           <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">

@@ -3,6 +3,7 @@ import { getAccessibleTenantIds } from "@healthscope/auth";
 import { requireAppSession } from "../../lib/auth-guards";
 import { getTenantAndOrganizationNames } from "../../lib/tenant-labels";
 import { SignOutButton } from "../../components/sign-out-button";
+import { SubmitButton } from "../../components/submit-button";
 import { switchTenantAction } from "./actions";
 
 const navItems = [
@@ -69,12 +70,13 @@ export default async function AppLayout({
                     ))}
                   </select>
                 </label>
-                <button
-                  className="inline-flex w-full items-center justify-center rounded-full border border-slate-300/80 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-white"
-                  type="submit"
+                <SubmitButton
+                  className="w-full"
+                  loadingLabel="Switching..."
+                  variant="secondary"
                 >
                   Switch organization
-                </button>
+                </SubmitButton>
               </form>
             ) : null}
 

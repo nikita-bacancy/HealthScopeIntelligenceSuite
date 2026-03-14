@@ -1,7 +1,7 @@
 import { getAccessibleTenantIds } from "@healthscope/auth";
 import { requireAppSession } from "../../lib/auth-guards";
 import { getTenantAndOrganizationNames } from "../../lib/tenant-labels";
-import { FeedbackBanner } from "../../components/feedback-banner";
+import { RedirectFeedbackToast } from "../../components/redirect-feedback-toast";
 import { getUserFacingMessageFromParam } from "../../lib/user-error-messages";
 
 export default async function AppHomePage({
@@ -39,17 +39,10 @@ export default async function AppHomePage({
             </p>
           </div>
 
-          <div className="space-y-3">
-            {searchParams?.success ? (
-              <FeedbackBanner message={searchParams.success} tone="success" />
-            ) : null}
-            {searchParams?.error ? (
-              <FeedbackBanner
-                message={getUserFacingMessageFromParam(searchParams.error, "admin")}
-                tone="error"
-              />
-            ) : null}
-          </div>
+          <RedirectFeedbackToast
+            error={searchParams?.error ? getUserFacingMessageFromParam(searchParams.error, "admin") : null}
+            success={searchParams?.success ?? null}
+          />
 
           <div className="grid gap-4 md:grid-cols-3">
             <article className="rounded-3xl border border-slate-200/80 bg-white/80 p-5">

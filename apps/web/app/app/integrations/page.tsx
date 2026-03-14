@@ -1,7 +1,8 @@
 import { getIntegrationOverview } from "../../../lib/admin";
 import { requireTenantAdminSession } from "../../../lib/auth-guards";
 import { DataTable, type DataTableColumn } from "../../../components/data-table";
-import { FeedbackBanner } from "../../../components/feedback-banner";
+import { RedirectFeedbackToast } from "../../../components/redirect-feedback-toast";
+import { SubmitButton } from "../../../components/submit-button";
 import {
   createFhirSourceAction,
   queueSyncJobAction,
@@ -96,17 +97,10 @@ export default async function IntegrationsPage({
             </p>
           </div>
 
-          <div className="space-y-3">
-            {searchParams?.success ? (
-              <FeedbackBanner message={searchParams.success} tone="success" />
-            ) : null}
-            {searchParams?.error ? (
-              <FeedbackBanner
-                message={getUserFacingMessageFromParam(searchParams.error, "integrations")}
-                tone="error"
-              />
-            ) : null}
-          </div>
+          <RedirectFeedbackToast
+            error={searchParams?.error ? getUserFacingMessageFromParam(searchParams.error, "integrations") : null}
+            success={searchParams?.success ?? null}
+          />
         </div>
       </section>
 
@@ -163,12 +157,12 @@ export default async function IntegrationsPage({
                 <option value="manual">Manual</option>
               </select>
             </label>
-            <button
-              className="inline-flex items-center justify-center rounded-full bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(16,185,129,0.28)] transition hover:bg-emerald-600 md:col-span-2"
-              type="submit"
+            <SubmitButton
+              className="md:col-span-2"
+              loadingLabel="Registering..."
             >
               Register data source
-            </button>
+            </SubmitButton>
           </form>
         </div>
 
@@ -333,12 +327,13 @@ export default async function IntegrationsPage({
                     </select>
                   </label>
                   <div className="flex items-end xl:col-span-1">
-                    <button
-                      className="inline-flex w-full items-center justify-center rounded-full border border-slate-300/80 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                      type="submit"
+                    <SubmitButton
+                      className="w-full"
+                      loadingLabel="Saving..."
+                      variant="secondary"
                     >
                       Save source
-                    </button>
+                    </SubmitButton>
                   </div>
                 </div>
               </form>
@@ -415,12 +410,9 @@ export default async function IntegrationsPage({
                     />
                   </label>
                   <div className="flex items-end">
-                    <button
-                      className="inline-flex w-full items-center justify-center rounded-full bg-emerald-500 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(16,185,129,0.25)] transition hover:bg-emerald-600"
-                      type="submit"
-                    >
+                    <SubmitButton className="w-full" loadingLabel="Saving...">
                       Save credentials
-                    </button>
+                    </SubmitButton>
                   </div>
                 </div>
                 {cred ? (
@@ -448,12 +440,13 @@ export default async function IntegrationsPage({
             <div className="text-xs text-slate-500">
               Pending: {queuedJobs.length}
             </div>
-            <button
-              className="inline-flex items-center justify-center rounded-full border border-slate-300/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition hover:bg-white"
-              type="submit"
+            <SubmitButton
+              className="px-4 py-2 text-xs uppercase tracking-[0.12em]"
+              loadingLabel="Running..."
+              variant="secondary"
             >
               Run pending syncs
-            </button>
+            </SubmitButton>
           </form>
         </div>
 
@@ -469,12 +462,12 @@ export default async function IntegrationsPage({
                 <span className="text-sm font-semibold text-slate-900">{source.name}</span>
                 <span className="text-xs text-slate-500">{source.base_url}</span>
               </div>
-              <button
-                className="inline-flex items-center justify-center rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-emerald-600"
-                type="submit"
+              <SubmitButton
+                className="px-4 py-2 text-xs uppercase tracking-[0.12em]"
+                loadingLabel="Running..."
               >
                 Run sync
-              </button>
+              </SubmitButton>
             </form>
           ))}
         </div>

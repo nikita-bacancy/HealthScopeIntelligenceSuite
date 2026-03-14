@@ -10,9 +10,7 @@ export default function HomePage() {
     <main className="mx-auto min-h-screen max-w-7xl px-6 py-8 lg:px-10">
       <div className="mb-8 flex flex-col gap-4 rounded-[28px] border border-slate-200/70 bg-white/68 px-6 py-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
-          <span className="relative h-11 w-11 rounded-[18px] bg-[linear-gradient(135deg,#10b981,#f0a45d)]">
-            <span className="absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/90" />
-          </span>
+          
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
               {DEFAULT_APP_NAME}
