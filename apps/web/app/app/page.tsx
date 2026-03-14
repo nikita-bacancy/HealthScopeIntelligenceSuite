@@ -1,4 +1,6 @@
+import { getAccessibleTenantIds } from "@healthscope/auth";
 import { requireAppSession } from "../../lib/auth-guards";
+import { getTenantAndOrganizationNames } from "../../lib/tenant-labels";
 import { FeedbackBanner } from "../../components/feedback-banner";
 import { getUserFacingMessageFromParam } from "../../lib/user-error-messages";
 
@@ -12,6 +14,13 @@ export default async function AppHomePage({
 }) {
   const session = await requireAppSession();
   const activeTenant = session.context.activeTenant;
+  const accessibleTenantIds = getAccessibleTenantIds(session.context);
+  const { tenantNames, organizationName } = await getTenantAndOrganizationNames(
+    accessibleTenantIds,
+    activeTenant?.organizationId ?? null
+  );
+  const tenantLabel = activeTenant ? (tenantNames[activeTenant.tenantId] ?? activeTenant.tenantId) : null;
+  const orgLabel = activeTenant ? (organizationName ?? activeTenant.organizationId) : null;
 
   return (
     <>
@@ -64,11 +73,11 @@ export default async function AppHomePage({
             <article className="rounded-3xl border border-slate-200/80 bg-white/80 p-5">
               <h3 className="text-sm font-semibold text-slate-500">Organization</h3>
               <p className="mt-3 break-words text-xl font-semibold text-slate-950">
-                {activeTenant?.tenantId ?? "Unassigned"}
+                {tenantLabel ?? "Unassigned"}
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 {activeTenant
-                  ? `Organization ${activeTenant.organizationId}`
+                  ? (orgLabel ?? `Organization ${activeTenant.organizationId}`)
                   : "Ask an administrator to grant you access to an organization."}
               </p>
             </article>

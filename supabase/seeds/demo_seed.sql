@@ -25,6 +25,28 @@ values
   ('55555555-5555-4555-8555-555555555555', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-333333333333', 'Northwind Specialty Center', 'clinic', 'America/Chicago', 'fac-specialty')
 on conflict (id) do nothing;
 
+-- Second tenant: Southridge Health (so org switcher appears and switching shows different data)
+insert into public.tenants (id, slug, name, status)
+values (
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+  'southridge-health',
+  'Southridge Health',
+  'active'
+)
+on conflict (id) do nothing;
+
+insert into public.organizations (id, tenant_id, name, type, status)
+values
+  ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Southridge Medical Center', 'hospital', 'active'),
+  ('dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Southridge Urgent Care', 'clinic-group', 'active')
+on conflict (id) do nothing;
+
+insert into public.facilities (id, tenant_id, organization_id, name, facility_type, timezone, external_id)
+values
+  ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'Southridge Main', 'hospital', 'America/Los_Angeles', 'fac-south-main'),
+  ('ffffffff-ffff-4fff-8fff-ffffffffffff', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'Southridge Urgent Care East', 'clinic', 'America/Los_Angeles', 'fac-south-uc')
+on conflict (id) do nothing;
+
 -- Optional demo users/memberships: only inserts if matching auth.users already exist
 do $$
 declare
@@ -42,6 +64,10 @@ begin
     insert into public.tenant_memberships (id, tenant_id, user_id, role_name, status, organization_id, facility_id)
     values ('88888888-8888-4888-8888-888888888888', '11111111-1111-4111-8111-111111111111', admin_rec.id, 'tenant_admin', 'active', null, null)
     on conflict (id) do nothing;
+
+    insert into public.tenant_memberships (id, tenant_id, user_id, role_name, status, organization_id, facility_id)
+    values ('77777777-7777-4777-8777-777777777777', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', admin_rec.id, 'tenant_admin', 'active', 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', null)
+    on conflict (id) do nothing;
   end if;
 
   if analyst_rec.id is not null then
@@ -51,6 +77,10 @@ begin
 
     insert into public.tenant_memberships (id, tenant_id, user_id, role_name, status, organization_id, facility_id)
     values ('99999999-9999-4999-8999-999999999999', '11111111-1111-4111-8111-111111111111', analyst_rec.id, 'clinical_analyst', 'active', '22222222-2222-4222-8222-222222222222', null)
+    on conflict (id) do nothing;
+
+    insert into public.tenant_memberships (id, tenant_id, user_id, role_name, status, organization_id, facility_id)
+    values ('66666666-6666-4666-8666-666666666666', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', analyst_rec.id, 'clinical_analyst', 'active', 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', null)
     on conflict (id) do nothing;
   end if;
 end $$;
@@ -228,3 +258,131 @@ select
 from public.integration_sync_jobs j
 where j.message like 'Auth error:%'
 limit 1;
+
+-- Southridge Health: patients, providers, encounters, claims, quality, data sources
+insert into public.patients (id, tenant_id, organization_id, facility_id, external_id, mrn, first_name, last_name, birth_date, sex, status)
+values
+  (gen_random_uuid(), 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'pat-s001', 'MRN-S1001', 'Sam', 'Rivera', '1972-05-20', 'male', 'active'),
+  (gen_random_uuid(), 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'pat-s002', 'MRN-S1002', 'Jamie', 'Chen', '1988-11-03', 'female', 'active'),
+  (gen_random_uuid(), 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'ffffffff-ffff-4fff-8fff-ffffffffffff', 'pat-s003', 'MRN-S2001', 'Morgan', 'Foster', '1995-07-12', 'other', 'active')
+on conflict (tenant_id, external_id) do nothing;
+
+insert into public.providers (id, tenant_id, organization_id, facility_id, external_id, npi, full_name, specialty, status)
+values
+  (gen_random_uuid(), 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'prov-s001', '2000000001', 'Jordan Blake, MD', 'Emergency Medicine', 'active'),
+  (gen_random_uuid(), 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'ffffffff-ffff-4fff-8fff-ffffffffffff', 'prov-s002', '2000000002', 'Riley Kim, PA', 'Urgent Care', 'active')
+on conflict (tenant_id, external_id) do nothing;
+
+insert into public.clinical_encounters (id, tenant_id, organization_id, facility_id, patient_id, provider_id, external_id, encounter_type, status, encounter_at, discharged_at, length_of_stay_days, primary_diagnosis_code)
+select
+  gen_random_uuid(),
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+  p1.id,
+  pr1.id,
+  'enc-s001',
+  'emergency',
+  'completed',
+  now() - interval '5 days',
+  now() - interval '4 days',
+  1.0,
+  'J06.9'
+from public.patients p1, public.providers pr1
+where p1.tenant_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' and p1.mrn = 'MRN-S1001' and pr1.npi = '2000000001'
+limit 1
+on conflict (tenant_id, external_id) do nothing;
+
+insert into public.clinical_encounters (id, tenant_id, organization_id, facility_id, patient_id, provider_id, external_id, encounter_type, status, encounter_at, discharged_at, length_of_stay_days, primary_diagnosis_code)
+select
+  gen_random_uuid(),
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+  'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+  'ffffffff-ffff-4fff-8fff-ffffffffffff',
+  p2.id,
+  pr2.id,
+  'enc-s002',
+  'outpatient',
+  'completed',
+  now() - interval '1 day',
+  now() - interval '1 day' + interval '45 minutes',
+  0.03,
+  'Z00.00'
+from public.patients p2, public.providers pr2
+where p2.tenant_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' and p2.mrn = 'MRN-S2001' and pr2.npi = '2000000002'
+limit 1
+on conflict (tenant_id, external_id) do nothing;
+
+insert into public.insurance_claims (id, tenant_id, organization_id, facility_id, encounter_id, patient_id, payer_name, claim_status, billed_amount, allowed_amount, paid_amount, submitted_at)
+select
+  gen_random_uuid(),
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+  e1.id,
+  e1.patient_id,
+  'United Healthcare',
+  'paid',
+  3200.00,
+  2800.00,
+  2650.00,
+  now() - interval '3 days'
+from public.clinical_encounters e1
+where e1.tenant_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' and e1.external_id = 'enc-s001'
+limit 1;
+
+insert into public.insurance_claims (id, tenant_id, organization_id, facility_id, encounter_id, patient_id, payer_name, claim_status, billed_amount, allowed_amount, paid_amount, submitted_at)
+select
+  gen_random_uuid(),
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+  'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+  'ffffffff-ffff-4fff-8fff-ffffffffffff',
+  e2.id,
+  e2.patient_id,
+  'Cigna',
+  'pending',
+  185.00,
+  150.00,
+  0,
+  now() - interval '1 day'
+from public.clinical_encounters e2
+where e2.tenant_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' and e2.external_id = 'enc-s002'
+limit 1;
+
+insert into public.quality_measure_results (id, tenant_id, organization_id, facility_id, patient_id, encounter_id, measure_code, measure_name, measure_status, measured_at)
+select
+  gen_random_uuid(),
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+  e1.patient_id,
+  e1.id,
+  'ED-1',
+  'Emergency Department Throughput',
+  'met',
+  now() - interval '4 days'
+from public.clinical_encounters e1
+where e1.tenant_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' and e1.external_id = 'enc-s001'
+limit 1;
+
+insert into public.quality_measure_results (id, tenant_id, organization_id, facility_id, patient_id, encounter_id, measure_code, measure_name, measure_status, measured_at)
+select
+  gen_random_uuid(),
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+  'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+  'ffffffff-ffff-4fff-8fff-ffffffffffff',
+  e2.patient_id,
+  e2.id,
+  'OP-1',
+  'Outpatient Follow-up',
+  'not_met',
+  now() - interval '1 day'
+from public.clinical_encounters e2
+where e2.tenant_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' and e2.external_id = 'enc-s002'
+limit 1;
+
+insert into public.data_sources (id, tenant_id, organization_id, source_type, name, base_url, auth_type, sync_frequency, status)
+values
+  ('bbbbbbb1-bbbb-4bbb-8bbb-bbbbbbbbbbb1', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'fhir', 'Southridge Epic FHIR', 'https://ehr.southridge.demo/fhir/R4', 'oauth2', 'hourly', 'active'),
+  ('bbbbbbb2-bbbb-4bbb-8bbb-bbbbbbbbbbb2', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'hl7v2', 'Southridge HL7 ADT', 'https://hl7.southridge.demo/adt', 'api-key', 'realtime', 'active')
+on conflict (id) do nothing;

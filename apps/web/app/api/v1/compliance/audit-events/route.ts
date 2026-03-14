@@ -1,9 +1,9 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { requireSession } from "@healthscope/auth/server";
-import { createSupabaseServerClient } from "@healthscope/auth/supabase";
 import { createAuditEvent } from "@healthscope/compliance";
 import { hasSupabaseEnv } from "@healthscope/config";
+import { getAuditEvents } from "../../../../../lib/audit-events";
 import { getUserFacingMessage } from "../../../../../lib/user-error-messages";
 
 export async function GET(request: NextRequest) {
@@ -64,32 +64,13 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const supabase = createSupabaseServerClient(await cookies());
-
-  if (!supabase) {
-    return NextResponse.json(
-      {
-        data: [],
-        pagination: null,
-        meta: {
-          version: "v1"
-        },
-        error: {
-          code: "SUPABASE_NOT_CONFIGURED",
-          message: getUserFacingMessage(new Error("Supabase"), "api")
-        }
-      },
-      { status: 503 }
-    );
-  }
-
   const limit = Math.min(Number(request.nextUrl.searchParams.get("limit") ?? "25"), 100);
-  const { data, error } = await supabase
-    .from("audit_events")
-    .select("id, action, target_type, target_id, outcome, metadata, occurred_at")
-    .eq("tenant_id", session.context.activeTenant.tenantId)
-    .order("occurred_at", { ascending: false })
-    .limit(limit);
+  const cookieStore = await cookies();
+  const { data, error } = await getAuditEvents(
+    cookieStore,
+    session.context.activeTenant.tenantId,
+    limit
+  );
 
   if (error) {
     return NextResponse.json(
@@ -104,12 +85,12 @@ export async function GET(request: NextRequest) {
           message: getUserFacingMessage(error, "api")
         }
       },
-      { status: 500 }
+      { status: error.message.includes("not configured") ? 503 : 500 }
     );
   }
 
   return NextResponse.json({
-    data: data ?? [],
+    data,
     pagination: {
       nextCursor: null
     },

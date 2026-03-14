@@ -105,6 +105,26 @@ export async function resolveSessionContext(
     cookieStore.get(ACTIVE_TENANT_COOKIE_NAME)?.value;
   const activeMembership = selectActiveMembership(membershipRecords, requestedTenantId);
 
+  let activeTenant = buildTenantContextFromMembership(activeMembership, membershipRecords);
+
+  if (activeTenant === null && activeMembership !== null) {
+    const { data: firstOrg } = await supabase
+      .from("organizations")
+      .select("id")
+      .eq("tenant_id", activeMembership.tenantId)
+      .order("name")
+      .limit(1)
+      .maybeSingle();
+
+    if (firstOrg) {
+      activeTenant = {
+        tenantId: activeMembership.tenantId,
+        organizationId: firstOrg.id,
+        facilityIds: []
+      };
+    }
+  }
+
   return {
     ok: true,
     context: {
@@ -114,7 +134,7 @@ export async function resolveSessionContext(
         fullName: profile?.full_name ?? null
       },
       memberships: membershipRecords,
-      activeTenant: buildTenantContextFromMembership(activeMembership, membershipRecords)
+      activeTenant
     }
   };
 }
