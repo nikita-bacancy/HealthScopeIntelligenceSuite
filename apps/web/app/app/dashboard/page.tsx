@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatAnalyticsNumber } from "../../../lib/analytics-presenter";
 import { getAnalyticsOverview, getTenantReferenceData } from "../../../lib/analytics";
+import { ExportAnalyticsButton } from "../../../components/export-analytics-button";
 import { loadSnapshots } from "../../../lib/snapshots";
 import { requireAppSession } from "../../../lib/auth-guards";
 import { getUserFacingMessage } from "../../../lib/user-error-messages";
@@ -381,12 +382,11 @@ export default async function DashboardPage({
           >
             Open integrations
           </Link>
-          <Link
-            className="inline-flex items-center justify-center rounded-full border border-slate-300/80 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white"
-            href="/api/v1/analytics/overview"
-          >
-            Export data
-          </Link>
+          <ExportAnalyticsButton
+            days={days}
+            organizationId={organizationId}
+            facilityId={facilityId}
+          />
         </div>
         </div>
       </section>
@@ -440,7 +440,7 @@ export default async function DashboardPage({
                   snapshots.slice(0, 10).map((snap) => (
                     <tr className="transition-colors hover:bg-emerald-50/40" key={`${snap.metric_key}-${snap.period_end}`}>
                       <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
-                        {snap.metric_label}
+                        {snap.metric_label.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
                       </td>
                       <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
                         {formatAnalyticsNumber(Number(snap.value_numeric ?? 0), "integer")}

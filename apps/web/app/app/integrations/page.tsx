@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getIntegrationOverview } from "../../../lib/admin";
 import { requireTenantAdminSession } from "../../../lib/auth-guards";
 import { DataTable, type DataTableColumn } from "../../../components/data-table";
@@ -37,9 +38,9 @@ const sourceColumns: Array<
   { key: "name", header: "Name" },
   { key: "organization", header: "Organization" },
   { key: "endpoint", header: "Endpoint", variant: "mono" },
-  { key: "auth", header: "Auth" },
-  { key: "sync", header: "Sync" },
-  { key: "status", header: "Status" },
+  { key: "auth", header: "Auth", capitalize: true },
+  { key: "sync", header: "Sync", capitalize: true },
+  { key: "status", header: "Status", capitalize: true },
   { key: "lastSync", header: "Last sync" }
 ];
 
@@ -54,10 +55,45 @@ function formatDateTime(value: string | null) {
   }).format(new Date(value));
 }
 
+function formatDateTimeCell(value: string | null | undefined): string {
+  if (value == null || value === "") return "—";
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  }).format(new Date(value));
+}
+
+const INTEGRATION_SECTIONS = ["overview", "sources", "credentials", "sync"] as const;
+type IntegrationSection = (typeof INTEGRATION_SECTIONS)[number];
+
+function normalizeSection(value: string | undefined): IntegrationSection {
+  if (value && INTEGRATION_SECTIONS.includes(value as IntegrationSection)) return value as IntegrationSection;
+  return "overview";
+}
+
+function integrationSectionHref(
+  section: IntegrationSection,
+  searchParams?: { success?: string; error?: string }
+): string {
+  const params = new URLSearchParams();
+  params.set("section", section);
+  if (searchParams?.success) params.set("success", searchParams.success);
+  if (searchParams?.error) params.set("error", searchParams.error);
+  return `/app/integrations?${params.toString()}`;
+}
+
+const SECTION_LABELS: Record<IntegrationSection, string> = {
+  overview: "Overview",
+  sources: "Data sources",
+  credentials: "Credentials",
+  sync: "Sync and jobs"
+};
+
 export default async function IntegrationsPage({
   searchParams
 }: {
   searchParams?: {
+    section?: string;
     success?: string;
     error?: string;
   };
@@ -68,6 +104,7 @@ export default async function IntegrationsPage({
   const queuedJobs = await getQueuedJobs(session.context);
   const credentials = await getCredentialsForSources(session.context);
   const recentEvents = await getRecentJobEvents(session.context, 12);
+  const currentSection = normalizeSection(searchParams?.section);
   const sourceRows = overview.dataSources.map((source) => ({
     name: source.name,
     organization:
@@ -101,10 +138,76 @@ export default async function IntegrationsPage({
             error={searchParams?.error ? getUserFacingMessageFromParam(searchParams.error, "integrations") : null}
             success={searchParams?.success ?? null}
           />
-        </div>
-      </section>
 
-      <section className="grid gap-5 sm:gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <nav aria-label="Integrations sections" className="flex flex-wrap gap-2 border-b border-slate-200/80 pb-4">
+            {INTEGRATION_SECTIONS.map((section) => {
+              const isActive = section === currentSection;
+              return (
+                <Link
+                  key={section}
+                  href={integrationSectionHref(section, searchParams)}
+                  aria-current={isActive ? "page" : undefined}
+                  className={
+                    isActive
+                      ? "rounded-2xl bg-emerald-100 px-4 py-2.5 text-sm font-semibold text-emerald-800 transition"
+                      : "rounded-2xl px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
+                  }
+                >
+                  {SECTION_LABELS[section]}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {currentSection === "overview" && (
+            <>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <article className="rounded-3xl border border-slate-200/80 bg-white/80 p-5">
+                  <h3 className="text-sm font-semibold text-slate-500">Data sources</h3>
+                  <p className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">
+                    {overview.dataSources.length}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Registered EHR and data sources.
+                  </p>
+                </article>
+                <article className="rounded-3xl border border-slate-200/80 bg-white/80 p-5">
+                  <h3 className="text-sm font-semibold text-slate-500">Queued jobs</h3>
+                  <p className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">
+                    {queuedJobs.length}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Sync jobs pending.
+                  </p>
+                </article>
+                <article className="rounded-3xl border border-slate-200/80 bg-white/80 p-5">
+                  <h3 className="text-sm font-semibold text-slate-500">Recent jobs</h3>
+                  <p className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">
+                    {recentJobs.length}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Last sync runs.
+                  </p>
+                </article>
+                <article className="rounded-3xl border border-slate-200/80 bg-white/80 p-5">
+                  <h3 className="text-sm font-semibold text-slate-500">Job events</h3>
+                  <p className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">
+                    {recentEvents.length}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Recent integration logs.
+                  </p>
+                </article>
+              </div>
+              <p className="text-sm leading-6 text-slate-600">
+                Use the tabs above to manage data sources, credentials, and sync jobs.
+              </p>
+            </>
+          )}
+
+          {currentSection === "sources" && (
+            <section className="grid gap-5 sm:gap-6">
+              <div className="grid gap-5 sm:gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="rounded-[30px] border border-slate-200/70 bg-white/78 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6 md:p-7">
           <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">
             Add EHR connection
@@ -202,27 +305,26 @@ export default async function IntegrationsPage({
             </div>
           </div>
         </div>
-      </section>
 
-      <section className="rounded-[30px] border border-slate-200/70 bg-white/78 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6 md:p-7">
-        <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">
-          Registered source systems
-        </h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          Registered data sources for your organization.
-        </p>
+        <div className="rounded-[30px] border border-slate-200/70 bg-white/78 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6 md:p-7">
+          <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">
+            Registered source systems
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Registered data sources for your organization.
+          </p>
 
-        <div className="mt-6">
-          <DataTable
-            columns={sourceColumns}
-            data={sourceRows}
-            emptyMessage="No data sources registered yet."
-          />
-        </div>
+          <div className="mt-6">
+            <DataTable
+              columns={sourceColumns}
+              data={sourceRows}
+              emptyMessage="No data sources registered yet."
+            />
+          </div>
 
-        {overview.dataSources.length > 0 ? (
+          {overview.dataSources.length > 0 ? (
             <div className="mt-6 grid gap-4">
-            {overview.dataSources.map((source) => (
+              {overview.dataSources.map((source) => (
               <form
                 action={updateDataSourceAction}
                 className="rounded-[28px] border border-slate-200/80 bg-white/85 p-5 shadow-sm"
@@ -327,21 +429,21 @@ export default async function IntegrationsPage({
                     </select>
                   </label>
                   <div className="flex items-end xl:col-span-1">
-                    <SubmitButton
-                      className="w-full"
-                      loadingLabel="Saving..."
-                      variant="secondary"
-                    >
+                    <SubmitButton className="w-full" loadingLabel="Saving...">
                       Save source
                     </SubmitButton>
                   </div>
                 </div>
               </form>
-            ))}
-          </div>
-        ) : null}
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
       </section>
+          )}
 
+          {currentSection === "credentials" && (
       <section className="rounded-[30px] border border-slate-200/70 bg-white/78 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6 md:p-7">
         <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">Connection credentials</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -427,7 +529,10 @@ export default async function IntegrationsPage({
           })}
         </div>
       </section>
+          )}
 
+          {currentSection === "sync" && (
+            <>
       <section className="rounded-[30px] border border-slate-200/70 bg-white/78 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6 md:p-7">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
@@ -441,7 +546,7 @@ export default async function IntegrationsPage({
               Pending: {queuedJobs.length}
             </div>
             <SubmitButton
-              className="px-4 py-2 text-xs uppercase tracking-[0.12em]"
+              className="px-4 py-2 text-xs tracking-[0.04em]"
               loadingLabel="Running..."
               variant="secondary"
             >
@@ -463,7 +568,7 @@ export default async function IntegrationsPage({
                 <span className="text-xs text-slate-500">{source.base_url}</span>
               </div>
               <SubmitButton
-                className="px-4 py-2 text-xs uppercase tracking-[0.12em]"
+                className="px-4 py-2 text-xs tracking-[0.04em]"
                 loadingLabel="Running..."
               >
                 Run sync
@@ -508,22 +613,23 @@ export default async function IntegrationsPage({
                   recentJobs.map((job) => {
                     const source =
                       overview.dataSources.find((s) => s.id === job.data_source_id) ?? null;
+                    const sourceLabel = source ? source.name : "Unknown source";
                     return (
                       <tr className="transition-colors hover:bg-emerald-50/40" key={job.id}>
                         <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
-                          {job.id.slice(0, 8)}
+                          Sync
                         </td>
                         <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
-                          {source ? source.name : job.data_source_id}
+                          {sourceLabel}
                         </td>
-                        <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
+                        <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700 capitalize">
                           {job.status}
                         </td>
                         <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
-                          {job.started_at ? new Date(job.started_at).toLocaleString() : "—"}
+                          {formatDateTimeCell(job.started_at)}
                         </td>
                         <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
-                          {job.finished_at ? new Date(job.finished_at).toLocaleString() : "—"}
+                          {formatDateTimeCell(job.finished_at)}
                         </td>
                         <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
                           {sanitizeMessageForDisplay(job.message)}
@@ -573,29 +679,49 @@ export default async function IntegrationsPage({
                     </td>
                   </tr>
                 ) : (
-                  recentEvents.map((event) => (
-                    <tr className="transition-colors hover:bg-emerald-50/40" key={event.id}>
-                      <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
-                        {event.id.slice(0, 8)}
-                      </td>
-                      <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
-                        {event.job_id.slice(0, 8)}
-                      </td>
-                      <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
-                        {event.level}
-                      </td>
-                      <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
-                        {sanitizeMessageForDisplay(event.message)}
-                      </td>
-                      <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
-                        {new Date(event.occurred_at).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))
+                  (() => {
+                    const jobIdToSourceName = new Map<string, string>();
+                    recentJobs.forEach((job) => {
+                      const src = overview.dataSources.find((s) => s.id === job.data_source_id);
+                      jobIdToSourceName.set(job.id, src?.name ?? "Unknown source");
+                    });
+                    return recentEvents.map((event) => {
+                      const jobSource =
+                        jobIdToSourceName.get(event.job_id) ?? `Job ${event.job_id.slice(0, 8)}`;
+                      const levelLabel =
+                        event.level.charAt(0).toUpperCase() + event.level.slice(1).toLowerCase();
+                      return (
+                        <tr
+                          className="transition-colors hover:bg-emerald-50/40"
+                          key={event.id}
+                        >
+                          <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
+                            Log
+                          </td>
+                          <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
+                            {jobSource}
+                          </td>
+                          <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
+                            {levelLabel}
+                          </td>
+                          <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
+                            {sanitizeMessageForDisplay(event.message)}
+                          </td>
+                          <td className="border-b border-slate-100 px-4 py-3 text-sm text-slate-700">
+                            {formatDateTimeCell(event.occurred_at)}
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })()
                 )}
               </tbody>
             </table>
           </div>
+        </div>
+      </section>
+            </>
+          )}
         </div>
       </section>
     </>

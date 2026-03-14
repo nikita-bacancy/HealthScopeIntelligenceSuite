@@ -8,10 +8,17 @@ import {
   type ColumnDef
 } from "@tanstack/react-table";
 
+function capitalizeValue(value: string): string {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+}
+
 export type DataTableColumn<TData extends Record<string, unknown>> = {
   key: keyof TData & string;
   header: string;
   variant?: "default" | "mono";
+  /** When true, display string values with first letter uppercase (e.g. status, type). */
+  capitalize?: boolean;
 };
 
 type DataTableProps<TData extends Record<string, unknown>> = {
@@ -32,7 +39,11 @@ export function DataTable<TData extends Record<string, unknown>>({
         header: column.header,
         cell: ({ getValue }) => {
           const value = getValue();
-          const text = value == null || value === "" ? "—" : String(value);
+          const raw = value == null || value === "" ? "—" : String(value);
+          const text =
+            column.capitalize && raw !== "—" && typeof value === "string"
+              ? capitalizeValue(raw)
+              : raw;
 
           return (
             <span

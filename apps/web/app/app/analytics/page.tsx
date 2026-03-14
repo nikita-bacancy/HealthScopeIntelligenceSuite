@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { getAnalyticsOverview, getTenantReferenceData } from "../../../lib/analytics";
+import { ExportAnalyticsButton } from "../../../components/export-analytics-button";
 import { formatAnalyticsNumber } from "../../../lib/analytics-presenter";
 import { requireAppSession } from "../../../lib/auth-guards";
 import { getUserFacingMessage } from "../../../lib/user-error-messages";
@@ -108,12 +108,12 @@ export default async function AnalyticsPage({
               Narrow metrics by reporting window, organization, and facility.
             </p>
           </div>
-          <Link
+          <ExportAnalyticsButton
+            days={overview.windowDays}
+            organizationId={organizationId}
+            facilityId={facilityId}
             className="inline-flex items-center justify-center rounded-full border border-slate-300/80 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-white"
-            href={`/api/v1/analytics/overview?days=${overview.windowDays}${organizationId ? `&organizationId=${encodeURIComponent(organizationId)}` : ""}${facilityId ? `&facilityId=${encodeURIComponent(facilityId)}` : ""}`}
-          >
-            Export data
-          </Link>
+          />
         </div>
 
         <FilterForm pathname="/app/analytics" className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">

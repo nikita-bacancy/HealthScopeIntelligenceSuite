@@ -60,8 +60,8 @@ const organizationColumns: Array<
   }>
 > = [
   { key: "name", header: "Name" },
-  { key: "type", header: "Type" },
-  { key: "status", header: "Status" }
+  { key: "type", header: "Type", capitalize: true },
+  { key: "status", header: "Status", capitalize: true }
 ];
 
 const facilityColumns: Array<
@@ -74,7 +74,7 @@ const facilityColumns: Array<
 > = [
   { key: "name", header: "Name" },
   { key: "organization", header: "Organization" },
-  { key: "type", header: "Type" },
+  { key: "type", header: "Type", capitalize: true },
   { key: "timezone", header: "Timezone" }
 ];
 

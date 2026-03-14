@@ -38,13 +38,13 @@ export default function GlobalError({
             </p>
             <div className="mt-5 flex justify-center gap-3">
               <button
-                className="rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-800 shadow-sm"
+                className="rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-white"
                 onClick={() => reset()}
               >
                 Try again
               </button>
               <button
-                className="rounded-full border border-emerald-200 bg-emerald-500 px-5 py-2 text-sm font-semibold text-white shadow"
+                className="rounded-full border border-emerald-200 bg-emerald-500 px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-emerald-600"
                 onClick={() => window.location.assign("/")}
               >
                 Go home

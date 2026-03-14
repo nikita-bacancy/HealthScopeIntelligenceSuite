@@ -33,10 +33,19 @@ export function createSupabaseServerClient(cookieStore: CookieStore) {
           return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set?.({ name, value, ...options });
+          try {
+            cookieStore.set?.({ name, value, ...options });
+          } catch {
+            // Next.js allows cookies.set only in Server Actions or Route Handlers.
+            // No-op here so Server Component renders (e.g. page load) do not throw.
+          }
         },
         remove(name: string, options: CookieOptions) {
-          cookieStore.set?.({ name, value: "", ...options, maxAge: 0 });
+          try {
+            cookieStore.set?.({ name, value: "", ...options, maxAge: 0 });
+          } catch {
+            // Same as set: no-op when not in an action or route handler.
+          }
         }
       }
     }
